@@ -69,6 +69,7 @@ var AllMethods = []MethodTests{
 	EthGetCode,
 	EthGetStorage,
 	EthCall,
+	EthMulticall,
 	EthEstimateGas,
 	EthCreateAccessList,
 	EthGetBlockTransactionCountByNumber,
@@ -358,6 +359,236 @@ var EthCall = MethodTests{
 				}
 				if len(got) != 0 {
 					return fmt.Errorf("unexpected return value (got: %s, want: nil)", hexutil.Bytes(got))
+				}
+				return nil
+			},
+		},
+	},
+}
+
+// EthMulticall stores a list of all tests against the method.
+var EthMulticall = MethodTests{
+	"eth_multicall",
+	[]Test{
+		{
+			"multicall-simple",
+			"simulates a multicall transfer",
+			func(ctx context.Context, t *T) error {
+				params := []CallBatch{
+					{
+						StateOverrides: &StateOverride{
+							common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(1000)},
+						},
+						Calls: []TransactionArgs{{
+							From:  &common.Address{0xc0},
+							To:    &common.Address{0xc1},
+							Value: *newRPCBalance(1000),
+						}, {
+							From:  &common.Address{0xc1},
+							To:    &common.Address{0xc2},
+							Value: *newRPCBalance(1000),
+						}},
+					},
+				}
+				res := make([][]interface{}, 0)
+				if err := t.rpc.Call(&res, "eth_multicall", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params))
+				}
+				fmt.Printf("res: %v\n", res)
+				return nil
+			},
+		},
+		{
+			"multicall-transfer-over-blocks",
+			"simulates a transfering value over multiple blocks",
+			func(ctx context.Context, t *T) error {
+				params := []CallBatch{{
+					StateOverrides: &StateOverride{
+						common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(2000)},
+					},
+					Calls: []TransactionArgs{
+						{
+							From:  &common.Address{0xc0},
+							To:    &common.Address{0xc1},
+							Value: (*hexutil.Big)(big.NewInt(1000)),
+						}, {
+							From:  &common.Address{0xc0},
+							To:    &common.Address{0xc3},
+							Value: (*hexutil.Big)(big.NewInt(1000)),
+						},
+					},
+				}, {
+					StateOverrides: &StateOverride{
+						{0xc3}: OverrideAccount{Balance: newRPCBalance(0)},
+					},
+					Calls: []TransactionArgs{
+						{
+							From:  &common.Address{0xc1},
+							To:    &common.Address{0xc2},
+							Value: *newRPCBalance(1000),
+						}, {
+							From:  &common.Address{0xc3},
+							To:    &common.Address{0xc2},
+							Value: *newRPCBalance(1000),
+						},
+					},
+				}}
+				res := make([][]interface{}, 0)
+				if err := t.rpc.Call(&res, "eth_multicall", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params))
+				}
+				fmt.Printf("res: %v\n", res)
+				return nil
+			},
+		},
+		{
+			"multicall-override-block-num",
+			"simulates calls overriding the block num",
+			func(ctx context.Context, t *T) error {
+				params := []CallBatch{{
+					BlockOverrides: &BlockOverrides{
+						Number: (*hexutil.Big)(big.NewInt(11)),
+					},
+					Calls: []TransactionArgs{
+						{
+							From: &common.Address{0xc0},
+							Input: &hexutil.Bytes{
+								0x43,             // NUMBER
+								0x60, 0x00, 0x52, // MSTORE offset 0
+								0x60, 0x20, 0x60, 0x00, 0xf3, // RETURN
+							},
+						},
+					},
+				}, {
+					BlockOverrides: &BlockOverrides{
+						Number: (*hexutil.Big)(big.NewInt(12)),
+					},
+					Calls: []TransactionArgs{{
+						From: &common.Address{0xc1},
+						Input: &hexutil.Bytes{
+							0x43,             // NUMBER
+							0x60, 0x00, 0x52, // MSTORE offset 0
+							0x60, 0x20, 0x60, 0x00, 0xf3,
+						},
+					}},
+				}}
+				res := make([][]interface{}, 0)
+				if err := t.rpc.Call(&res, "eth_multicall", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params))
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-block-num-order",
+			"simulates calls with invalid block num order",
+			func(ctx context.Context, t *T) error {
+				params := []CallBatch{{
+					BlockOverrides: &BlockOverrides{
+						Number: (*hexutil.Big)(big.NewInt(12)),
+					},
+					Calls: []TransactionArgs{{
+						From: &common.Address{0xc1},
+						Input: &hexutil.Bytes{
+							0x43,             // NUMBER
+							0x60, 0x00, 0x52, // MSTORE offset 0
+							0x60, 0x20, 0x60, 0x00, 0xf3, // RETURN
+						},
+					}},
+				}, {
+					BlockOverrides: &BlockOverrides{
+						Number: (*hexutil.Big)(big.NewInt(11)),
+					},
+					Calls: []TransactionArgs{{
+						From: &common.Address{0xc0},
+						Input: &hexutil.Bytes{
+							0x43,             // NUMBER
+							0x60, 0x00, 0x52, // MSTORE offset 0
+							0x60, 0x20, 0x60, 0x00, 0xf3, // RETURN
+						},
+					}},
+				}}
+				res := make([][]interface{}, 0)
+				if err := t.rpc.Call(&res, "eth_multicall", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params))
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-set-read-storage",
+			"simulates calls setting and reading from storage contract",
+			func(ctx context.Context, t *T) error {
+				params := []CallBatch{{
+					StateOverrides: &StateOverride{
+						common.Address{0xc2}: OverrideAccount{
+							Code: hex2Bytes("608060405234801561001057600080fd5b50600436106100365760003560e01c80632e64cec11461003b5780636057361d14610059575b600080fd5b610043610075565b60405161005091906100d9565b60405180910390f35b610073600480360381019061006e919061009d565b61007e565b005b60008054905090565b8060008190555050565b60008135905061009781610103565b92915050565b6000602082840312156100b3576100b26100fe565b5b60006100c184828501610088565b91505092915050565b6100d3816100f4565b82525050565b60006020820190506100ee60008301846100ca565b92915050565b6000819050919050565b600080fd5b61010c816100f4565b811461011757600080fd5b5056fea2646970667358221220404e37f487a89a932dca5e77faaf6ca2de3b991f93d230604b1b8daaef64766264736f6c63430008070033"),
+						},
+					},
+					Calls: []TransactionArgs{{
+						// Set value to 5
+						From:  &common.Address{0xc0},
+						To:    &common.Address{0xc2},
+						Input: hex2Bytes("6057361d0000000000000000000000000000000000000000000000000000000000000005"),
+					}, {
+						// Read value
+						From:  &common.Address{0xc0},
+						To:    &common.Address{0xc2},
+						Input: hex2Bytes("2e64cec1"),
+					},
+					},
+				}}
+				res := make([][]interface{}, 0)
+				if err := t.rpc.Call(&res, "eth_multicall", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params))
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-logs",
+			"simulates calls with logs",
+			func(ctx context.Context, t *T) error {
+				params := []CallBatch{{
+					StateOverrides: &StateOverride{
+						common.Address{0xc2}: OverrideAccount{
+							// Yul code:
+							// object "Test" {
+							//    code {
+							//        let hash:u256 := 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
+							//        log1(0, 0, hash)
+							//        return (0, 0)
+							//    }
+							// }
+							Code: hex2Bytes("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff80600080a1600080f3"),
+						},
+					},
+					Calls: []TransactionArgs{{
+						From: &common.Address{0xc0},
+						To:   &common.Address{0xc2},
+					}},
+				}}
+				res := make([][]interface{}, 0)
+				if err := t.rpc.Call(&res, "eth_multicall", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params))
 				}
 				return nil
 			},
@@ -998,4 +1229,73 @@ var DebugGetRawTransaction = MethodTests{
 			},
 		},
 	},
+}
+
+// TransactionArgs represents the arguments to construct a new transaction
+// or a message call.
+type TransactionArgs struct {
+	From                 *common.Address `json:"from,omitempty"`
+	To                   *common.Address `json:"to,omitempty"`
+	Gas                  *hexutil.Uint64 `json:"gas,omitempty"`
+	GasPrice             *hexutil.Big    `json:"gasPrice,omitempty"`
+	MaxFeePerGas         *hexutil.Big    `json:"maxFeePerGas,omitempty"`
+	MaxPriorityFeePerGas *hexutil.Big    `json:"maxPriorityFeePerGas,omitempty"`
+	Value                *hexutil.Big    `json:"value,omitempty"`
+	Nonce                *hexutil.Uint64 `json:"nonce,omitempty"`
+
+	// We accept "data" and "input" for backwards-compatibility reasons.
+	// "input" is the newer name and should be preferred by clients.
+	// Issue detail: https://github.com/ethereum/go-ethereum/issues/15628
+	Data  *hexutil.Bytes `json:"data,omitempty"`
+	Input *hexutil.Bytes `json:"input,omitempty"`
+
+	// Introduced by AccessListTxType transaction.
+	AccessList *types.AccessList `json:"accessList,omitempty"`
+	ChainID    *hexutil.Big      `json:"chainId,omitempty"`
+}
+
+// BlockOverrides is a set of header fields to override.
+type BlockOverrides struct {
+	Number     *hexutil.Big    `json:"number,omitempty"`
+	Difficulty *hexutil.Big    `json:"difficulty,omitempty"`
+	Time       *hexutil.Uint64 `json:"time,omitempty"`
+	GasLimit   *hexutil.Uint64 `json:"gasLimit,omitempty"`
+	Coinbase   *common.Address `json:"coinbase,omitempty"`
+	Random     *common.Hash    `json:"random,omitempty"`
+	BaseFee    *hexutil.Big    `json:"baseFee,omitempty"`
+}
+
+// OverrideAccount indicates the overriding fields of account during the execution
+// of a message call.
+// Note, state and stateDiff can't be specified at the same time. If state is
+// set, message execution will only use the data in the given state. Otherwise
+// if statDiff is set, all diff will be applied first and then execute the call
+// message.
+type OverrideAccount struct {
+	Nonce     *hexutil.Uint64              `json:"nonce,omitempty"`
+	Code      *hexutil.Bytes               `json:"code,omitempty"`
+	Balance   **hexutil.Big                `json:"balance,omitempty"`
+	State     *map[common.Hash]common.Hash `json:"state,omitempty"`
+	StateDiff *map[common.Hash]common.Hash `json:"stateDiff,omitempty"`
+}
+
+// StateOverride is the collection of overridden accounts.
+type StateOverride map[common.Address]OverrideAccount
+
+// CallBatch is a batch of calls to be simulated sequentially.
+type CallBatch struct {
+	BlockOverrides    *BlockOverrides   `json:"blockOverrides,omitempty"`
+	StateOverrides    *StateOverride    `json:"stateOverrides,omitempty"`
+	ECRecoverOverride *hexutil.Bytes    `json:"ecrecoverOverride,omitempty"`
+	Calls             []TransactionArgs `json:"calls,omitempty"`
+}
+
+func newRPCBalance(balance int) **hexutil.Big {
+	rpcBalance := (*hexutil.Big)(big.NewInt(int64(balance)))
+	return &rpcBalance
+}
+
+func hex2Bytes(str string) *hexutil.Bytes {
+	rpcBytes := hexutil.Bytes(common.Hex2Bytes(str))
+	return &rpcBytes
 }
