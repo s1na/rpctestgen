@@ -397,7 +397,6 @@ var EthMulticall = MethodTests{
 				if len(res) != len(params) {
 					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params))
 				}
-				fmt.Printf("res: %v\n", res)
 				return nil
 			},
 		},
@@ -443,7 +442,6 @@ var EthMulticall = MethodTests{
 				if len(res) != len(params) {
 					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params))
 				}
-				fmt.Printf("res: %v\n", res)
 				return nil
 			},
 		},
