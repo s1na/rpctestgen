@@ -368,7 +368,7 @@ var EthCall = MethodTests{
 
 // EthMulticall stores a list of all tests against the method.
 var EthMulticall = MethodTests{
-	"eth_multicall",
+	"eth_multicallV1",
 	[]Test{
 		{
 			"multicall-simple",
@@ -391,7 +391,7 @@ var EthMulticall = MethodTests{
 					},
 				}
 				res := make([][]interface{}, 0)
-				if err := t.rpc.Call(&res, "eth_multicall", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params) {
@@ -436,7 +436,7 @@ var EthMulticall = MethodTests{
 					},
 				}}
 				res := make([][]interface{}, 0)
-				if err := t.rpc.Call(&res, "eth_multicall", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params) {
@@ -477,7 +477,7 @@ var EthMulticall = MethodTests{
 					}},
 				}}
 				res := make([][]interface{}, 0)
-				if err := t.rpc.Call(&res, "eth_multicall", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params) {
@@ -516,7 +516,7 @@ var EthMulticall = MethodTests{
 					}},
 				}}
 				res := make([][]interface{}, 0)
-				if err := t.rpc.Call(&res, "eth_multicall", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params) {
@@ -549,7 +549,7 @@ var EthMulticall = MethodTests{
 					},
 				}}
 				res := make([][]interface{}, 0)
-				if err := t.rpc.Call(&res, "eth_multicall", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params) {
@@ -582,7 +582,7 @@ var EthMulticall = MethodTests{
 					}},
 				}}
 				res := make([][]interface{}, 0)
-				if err := t.rpc.Call(&res, "eth_multicall", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params) {
