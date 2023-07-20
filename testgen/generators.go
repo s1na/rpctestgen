@@ -577,8 +577,9 @@ var EthMulticall = MethodTests{
 						},
 					},
 					Calls: []TransactionArgs{{
-						From: &common.Address{0xc0},
-						To:   &common.Address{0xc2},
+						From:  &common.Address{0xc0},
+						To:    &common.Address{0xc2},
+						Input: hex2Bytes("6057361d0000000000000000000000000000000000000000000000000000000000000005"),
 					}},
 				}}
 				res := make([][]interface{}, 0)
@@ -588,6 +589,176 @@ var EthMulticall = MethodTests{
 				if len(res) != len(params) {
 					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params))
 				}
+				return nil
+			},
+		},
+		{
+			"multicall-blockhash-simple",
+			"gets blockhash of previous block (included in original chain)",
+			func(ctx context.Context, t *T) error {
+				params := []CallBatch{{
+					StateOverrides: &StateOverride{
+						common.Address{0xc2}: OverrideAccount{
+							Code: blockHashCallerByteCode(),
+						},
+					},
+					Calls: []TransactionArgs{{
+						From:  &common.Address{0xc0},
+						To:    &common.Address{0xc2},
+						Input: hex2Bytes("0xee82ac5e0000000000000000000000000000000000000000000000000000000000000001"),
+					}},
+				}}
+				res := make([][]interface{}, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params))
+				}
+
+				checkBlockNumber(res[0].number, 1)
+
+				if len(res[0].calls) != 1 {
+					return fmt.Errorf("unexpected number of call results (have: %d, want: %d)", len(res[i].calls), 1)
+				}
+				checkBlockhash(res[0].calls[0].returnData, ???)
+				return nil
+			},
+		},
+		{
+			"multicall-blockhash-complex",
+			"gets blockhash of simulated block",
+			func(ctx context.Context, t *T) error {
+				params := []CallBatch{{
+					StateOverrides: &StateOverride{
+						common.Address{0xc2}: OverrideAccount{
+							Code: blockHashCallerByteCode(),
+						},
+					},
+					BlockOverrides: &BlockOverrides{
+						Number: (*hexutil.Big)(big.NewInt(10)),
+					},
+					Calls: []TransactionArgs{{
+						From:  &common.Address{0xc1},
+						Input: hex2Bytes("0xee82ac5e0000000000000000000000000000000000000000000000000000000000000001"),
+					}},
+				}, {
+					StateOverrides: &StateOverride{
+						common.Address{0xc2}: OverrideAccount{
+							Code: blockHashCallerByteCode(),
+						},
+					},
+					BlockOverrides: &BlockOverrides{
+						Number: (*hexutil.Big)(big.NewInt(20)),
+					},
+					Calls: []TransactionArgs{{
+						From:  &common.Address{0xc0},
+						Input: hex2Bytes("0xee82ac5e0000000000000000000000000000000000000000000000000000000000000010"),
+					}},
+				}, {
+					StateOverrides: &StateOverride{
+						common.Address{0xc2}: OverrideAccount{
+							Code: blockHashCallerByteCode()
+						},
+					},
+					BlockOverrides: &BlockOverrides{
+						Number: (*hexutil.Big)(big.NewInt(30)),
+					},
+					Calls: []TransactionArgs{{
+						From:  &common.Address{0xc0},
+						Input: hex2Bytes("0xee82ac5e0000000000000000000000000000000000000000000000000000000000000001"),
+					}},
+				}}
+				res := make([][]interface{}, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params))
+				}
+
+				for i := 0; i < len(res); i++ {
+					if len(res[i].calls) != 1 {
+						return fmt.Errorf("unexpected number of call results (have: %d, want: %d)", len(res[i].calls), 1)
+					}
+					if res[i].calls[0].status != "0x1" {
+						return fmt.Errorf("unexpected status value(have: %d, want: %d)", res[i].status, "0x1")
+					}
+				}
+				checkBlockNumber(res[0].number, 10)
+				checkBlockNumber(res[1].number, 20)
+				checkBlockNumber(res[2].number, 30)
+				// should get generated blockhash for that block
+				checkBlockhash(res[0].hash, ???)
+				// hash should equal keccack256(rlp([blockhash_10, 20]))
+				checkBlockhash(res[1].hash, keccack256(rlp([blockhash_10, 20])))
+				// hash shuld equal keccack256(rlp([blockhash_20, 30]))
+				checkBlockhash(res[2].hash, keccack256(rlp([blockhash_20, 30])))
+
+				// should equal to real heads blockhash
+				checkBlockhash(res[0].calls[0].returnData, ???)
+				// should equal first generated blocks hash
+				checkBlockhash(res[1].calls[0].returnData, ???)
+				// should equal keccack256(rlp([blockhash_20, 29]))
+				checkBlockhash(res[2].calls[0].returnData, keccack256(rlp([blockhash_20, 29])))
+				return nil
+			},
+		},
+		{
+			"multicall-blockhash-start-before-head",
+			"gets blockhash of simulated block",
+			func(ctx context.Context, t *T) error {
+				params := []CallBatch{{
+					StateOverrides: &StateOverride{
+						common.Address{0xc2}: OverrideAccount{
+							Code: blockHashCallerByteCode()
+						},
+					},
+					BlockOverrides: &BlockOverrides{
+						Number: (*hexutil.Big)(big.NewInt(10)),
+					},
+					Calls: []TransactionArgs{{
+						From:  &common.Address{0xc1},
+						Input: hex2Bytes("0xee82ac5e0000000000000000000000000000000000000000000000000000000000000001"),
+					}},
+				}, {
+					StateOverrides: &StateOverride{
+						common.Address{0xc2}: OverrideAccount{
+							Code: blockHashCallerByteCode()
+						},
+					},
+					BlockOverrides: &BlockOverrides{
+						Number: (*hexutil.Big)(big.NewInt(20)),
+					},
+					Calls: []TransactionArgs{{
+						From:  &common.Address{0xc0},
+						Input: hex2Bytes("0xee82ac5e0000000000000000000000000000000000000000000000000000000000000010"),
+					}},
+				}, 2 }, //todo, we need some initial blocks for this, so that we can start before head
+				res := make([][]interface{}, 0)
+				if len(res) != len(params) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params))
+				}
+
+				for i := 0; i < len(res); i++ {
+					if len(res[i].calls) != 1 {
+						return fmt.Errorf("unexpected number of call results (have: %d, want: %d)", len(res[i].calls), 1)
+					}
+					if res[i].calls[0].status != "0x1" {
+						return fmt.Errorf("unexpected status value(have: %d, want: %d)", res[i].status, "0x1")
+					}
+				}
+				checkBlockNumber(res[0].number, 10)
+				checkBlockNumber(res[1].number, 20)
+				// should get generated blockhash for block 3
+				checkBlockhash(res[0].hash, ???)
+				// hash should equal keccack256(rlp([blockhash_10, 20]))
+				checkBlockhash(res[1].hash, keccack256(rlp([blockhash_10, 20])))
+				// should equal to blockhash of block 2
+				checkBlockhash(res[0].calls[0].returnData, ???)
+				// should equal first generated blocks hash
+				checkBlockhash(res[1].calls[0].returnData, ???)
+				
 				return nil
 			},
 		},
