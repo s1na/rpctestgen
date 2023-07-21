@@ -1306,6 +1306,32 @@ type CallBatch struct {
 	Calls             []TransactionArgs `json:"calls,omitempty"`
 }
 
+type blockResult struct {
+	Number       hexutil.Uint64 `json:"number"`
+	Hash         common.Hash    `json:"hash"`
+	Time         hexutil.Uint64 `json:"timestamp"`
+	GasLimit     hexutil.Uint64 `json:"gasLimit"`
+	GasUsed      hexutil.Uint64 `json:"gasUsed"`
+	FeeRecipient common.Address `json:"feeRecipient"`
+	BaseFee      *hexutil.Big   `json:"baseFeePerGas"`
+	Calls        []callResult   `json:"calls"`
+}
+
+type callResult struct {
+	ReturnValue hexutil.Bytes  `json:"return"`
+	Logs        []*types.Log   `json:"logs"`
+	Transfers   []transfer     `json:"transfers,omitempty"`
+	GasUsed     hexutil.Uint64 `json:"gasUsed"`
+	Status      hexutil.Uint64 `json:"status"`
+	Error       *string        `json:"error,omitempty"`
+}
+
+type transfer struct {
+	From  common.Address `json:"from"`
+	To    common.Address `json:"to"`
+	Value *big.Int       `json:"value"`
+}
+
 func newRPCBalance(balance int) **hexutil.Big {
 	rpcBalance := (*hexutil.Big)(big.NewInt(int64(balance)))
 	return &rpcBalance
