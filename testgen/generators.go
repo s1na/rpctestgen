@@ -527,7 +527,7 @@ var EthMulticall = MethodTests{
 		},
 		{
 			"multicall-block-timestamp-order",
-			"simulates calls with invalid timestamp num order",
+			"Error: simulates calls with invalid timestamp num order",
 			func(ctx context.Context, t *T) error {
 				params := []CallBatch{{
 					BlockOverrides: &BlockOverrides{
@@ -891,7 +891,7 @@ var EthMulticall = MethodTests{
 		},
 		{
 			"multicall-transaction-too-low-nonce",
-			"Nonce too low",
+			"Error: Nonce too low",
 			func(ctx context.Context, t *T) error {
 				params := []CallBatch{{
 					StateOverrides: &StateOverride{
@@ -914,7 +914,7 @@ var EthMulticall = MethodTests{
 		},
 		{
 			"multicall-transaction-too-high-nonce",
-			"Nonce too high",
+			"Error: Nonce too high",
 			func(ctx context.Context, t *T) error {
 				params := []CallBatch{{
 					Calls: []TransactionArgs{{
@@ -937,7 +937,7 @@ var EthMulticall = MethodTests{
 		},
 		{
 			"multicall-basefee-too-low",
-			"BaseFee too low",
+			"Error: BaseFee too low",
 			func(ctx context.Context, t *T) error {
 				params := []CallBatch{{
 					StateOverrides: &StateOverride{
@@ -964,7 +964,7 @@ var EthMulticall = MethodTests{
 		},
 		{
 			"multicall-instrict-gas",
-			"Not enough gas provided to pay for intrinsic gas",
+			"Error: Not enough gas provided to pay for intrinsic gas",
 			func(ctx context.Context, t *T) error {
 				params := []CallBatch{{
 					Calls: []TransactionArgs{{
@@ -984,7 +984,7 @@ var EthMulticall = MethodTests{
 		},
 		{
 			"multicall-gas-fees-and-value-error",
-			"Insufficient funds to pay for gas fees and value",
+			"Error: Insufficient funds to pay for gas fees and value",
 			func(ctx context.Context, t *T) error {
 				params := []CallBatch{{
 					Calls: []TransactionArgs{{
@@ -1004,7 +1004,7 @@ var EthMulticall = MethodTests{
 		},
 		{
 			"multicall-move-to-address-itself-reference",
-			"MoveToAddress referenced itself in replacement",
+			"Error: MoveToAddress referenced itself in replacement",
 			func(ctx context.Context, t *T) error {
 				params := []CallBatch{{
 					StateOverrides: &StateOverride{
@@ -1017,6 +1017,59 @@ var EthMulticall = MethodTests{
 				}
 				checkStatus(res[0].status, "0x2")
 				checkError(res[0].errors.code, -38022)
+				return nil
+			},
+		},
+		{
+			"multicall-multiple-account-overrides",
+			"override an account multple times",
+			func(ctx context.Context, t *T) error {
+				params := []CallBatch{{
+					StateOverrides: &StateOverride{
+						common.Address{0xc0}: OverrideAccount{
+							moveToAddress: 0xc2,
+							code: selfDestructor(),
+						},
+						common.Address{0xc0}: OverrideAccount{
+							moveToAddress: 0xc1,
+							code: selfDestructor(),
+						},
+						common.Address{0xc3}: OverrideAccount{
+							Code: getCode()
+						},
+					},
+					{
+						Calls: []TransactionArgs{{
+							From:  &common.Address{0xc0},
+							To:  &common.Address{0xc3},
+							Input: hex2Bytes("0xdce4a44700000000000000000000000000000000000000000000000000000000000000c0"), //at(0xc0)
+						},
+						{
+							From:  &common.Address{0xc0},
+							To:  &common.Address{0xc3},
+							Input: hex2Bytes("0xdce4a44700000000000000000000000000000000000000000000000000000000000000c1"), //at(0xc1)
+						},
+						{
+							From:  &common.Address{0xc0},
+							To:  &common.Address{0xc3},
+							Input: hex2Bytes("0xdce4a44700000000000000000000000000000000000000000000000000000000000000c2"), //at(0xc2)
+						}},
+					}
+				}}
+				res := make([][]interface{}, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				
+				if len(res[0].calls[0].returnData) > 0 {
+					return fmt.Errorf("overrided contract does not have contract code")
+				}
+				if len(res[0].calls[1].returnData) > 0 {
+					return fmt.Errorf("overrided contract does not have contract code")
+				}
+				if len(res[0].calls[2].returnData) == 0 {
+					return fmt.Errorf("overrided contract haves contract code")
+				}
 				return nil
 			},
 		},
