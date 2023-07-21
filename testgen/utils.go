@@ -50,6 +50,18 @@ func checkBlockHash(value uint256, expected uint256) error {
 	}
 }
 
+func checkStatus(value type?, expected type?) error {
+	if value != expected {
+		return fmt.Errorf("expected status (have: %d, want: %d)", value, expected)
+	}
+}
+
+func checkError(value number, expected number) error {
+	if value != expected {
+		return fmt.Errorf("expected error (have: %d, want: %d)", value, expected)
+	}
+}
+
 func blockHashCallerByteCode() {
 	//Solidity code:
 	//contract blockHashCaller {

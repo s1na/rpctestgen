@@ -526,6 +526,32 @@ var EthMulticall = MethodTests{
 			},
 		},
 		{
+			"multicall-block-timestamp-order",
+			"simulates calls with invalid timestamp num order",
+			func(ctx context.Context, t *T) error {
+				params := []CallBatch{{
+					BlockOverrides: &BlockOverrides{
+						Time: (*hexutil.Big)(big.NewInt(12)),
+					},
+				}, {
+					BlockOverrides: &BlockOverrides{
+						Time: (*hexutil.Big)(big.NewInt(11)),
+					},
+				}}
+				res := make([][]interface{}, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params))
+				}
+				if res[0].errors.code != -38021 {
+					return fmt.Errorf("expected error code (have: %d, want: %d)", res[0].errors.code, -38021)
+				}
+				return nil
+			},
+		},
+		{
 			"multicall-set-read-storage",
 			"simulates calls setting and reading from storage contract",
 			func(ctx context.Context, t *T) error {
@@ -860,6 +886,137 @@ var EthMulticall = MethodTests{
 				if len(res[0].calls[0].logs) != 1 {
 					return fmt.Errorf("unexpected number of logs (have: %d, want: %d)", len(res), 1)
 				}
+				return nil
+			},
+		},
+		{
+			"multicall-transaction-too-low-nonce",
+			"Nonce too low",
+			func(ctx context.Context, t *T) error {
+				params := []CallBatch{{
+					StateOverrides: &StateOverride{
+						common.Address{0xc0}: OverrideAccount{Nonce: 10},
+					},
+					Calls: []TransactionArgs{{
+						Nonce: big.NewInt(0),
+						From: &common.Address{0xc1},
+						To: &common.Address{0xc1},
+					}},
+				}}
+				res := make([][]interface{}, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				checkStatus(res[0].status, "0x2")
+				checkError(res[0].errors.code, -38010)
+				return nil
+			},
+		},
+		{
+			"multicall-transaction-too-high-nonce",
+			"Nonce too high",
+			func(ctx context.Context, t *T) error {
+				params := []CallBatch{{
+					Calls: []TransactionArgs{{
+						Nonce: big.NewInt(100),,
+						From: &common.Address{0xc1},
+						To: &common.Address{0xc1},
+					}},
+				}}
+				res := make([][]interface{}, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params))
+				}
+				checkStatus(res[0].status, "0x2")
+				checkError(res[0].errors.code, -38011)
+				return nil
+			},
+		},
+		{
+			"multicall-basefee-too-low",
+			"BaseFee too low",
+			func(ctx context.Context, t *T) error {
+				params := []CallBatch{{
+					StateOverrides: &StateOverride{
+						common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(2000)},
+					},
+					BlockOverrides: &BlockOverrides{
+						BaseFee: (*hexutil.Big)(big.NewInt(10)),
+					},
+					Calls: []TransactionArgs{{
+						From: &common.Address{0xc1},
+						To: &common.Address{0xc1},
+						MaxFeePerGas: (*hexutil.Big)(big.NewInt(0)),
+						MaxPriorityFeePerGas: (*hexutil.Big)(big.NewInt(0)),
+					}},
+				}}
+				res := make([][]interface{}, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				checkStatus(res[0].status, "0x2")
+				checkError(res[0].errors.code, -38012)
+				return nil
+			},
+		},
+		{
+			"multicall-instrict-gas",
+			"Not enough gas provided to pay for intrinsic gas",
+			func(ctx context.Context, t *T) error {
+				params := []CallBatch{{
+					Calls: []TransactionArgs{{
+						From: &common.Address{0xc1},
+						To: &common.Address{0xc1},
+						gasLimit: (*hexutil.Big)(big.NewInt(0)),
+					}},
+				}}
+				res := make([][]interface{}, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				checkStatus(res[0].status, "0x2")
+				checkError(res[0].errors.code, -38013)
+				return nil
+			},
+		},
+		{
+			"multicall-gas-fees-and-value-error",
+			"Insufficient funds to pay for gas fees and value",
+			func(ctx context.Context, t *T) error {
+				params := []CallBatch{{
+					Calls: []TransactionArgs{{
+						From:  &common.Address{0xc0},
+						To:    &common.Address{0xc1},
+						Value: (*hexutil.Big)(big.NewInt(1000)),
+					}},
+				}}
+				res := make([][]interface{}, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				checkStatus(res[0].status, "0x2")
+				checkError(res[0].errors.code, -38014)
+				return nil
+			},
+		},
+		{
+			"multicall-move-to-address-itself-reference",
+			"MoveToAddress referenced itself in replacement",
+			func(ctx context.Context, t *T) error {
+				params := []CallBatch{{
+					StateOverrides: &StateOverride{
+						common.Address{0xc0}: OverrideAccount{moveToAddress: 0xc0},
+					},
+				}}
+				res := make([][]interface{}, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				checkStatus(res[0].status, "0x2")
+				checkError(res[0].errors.code, -38022)
 				return nil
 			},
 		},
