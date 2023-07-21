@@ -621,7 +621,7 @@ var EthMulticall = MethodTests{
 				if len(res[0].calls) != 1 {
 					return fmt.Errorf("unexpected number of call results (have: %d, want: %d)", len(res[i].calls), 1)
 				}
-				checkBlockhash(res[0].calls[0].returnData, ???)
+				checkBlockhash(res[0].calls[0].returnData, head_hash)
 				return nil
 			},
 		},
@@ -643,11 +643,6 @@ var EthMulticall = MethodTests{
 						Input: hex2Bytes("0xee82ac5e0000000000000000000000000000000000000000000000000000000000000001"),
 					}},
 				}, {
-					StateOverrides: &StateOverride{
-						common.Address{0xc2}: OverrideAccount{
-							Code: blockHashCallerByteCode(),
-						},
-					},
 					BlockOverrides: &BlockOverrides{
 						Number: (*hexutil.Big)(big.NewInt(20)),
 					},
@@ -656,11 +651,6 @@ var EthMulticall = MethodTests{
 						Input: hex2Bytes("0xee82ac5e0000000000000000000000000000000000000000000000000000000000000010"),
 					}},
 				}, {
-					StateOverrides: &StateOverride{
-						common.Address{0xc2}: OverrideAccount{
-							Code: blockHashCallerByteCode()
-						},
-					},
 					BlockOverrides: &BlockOverrides{
 						Number: (*hexutil.Big)(big.NewInt(30)),
 					},
@@ -688,19 +678,14 @@ var EthMulticall = MethodTests{
 				checkBlockNumber(res[0].number, 10)
 				checkBlockNumber(res[1].number, 20)
 				checkBlockNumber(res[2].number, 30)
-				// should get generated blockhash for that block
-				checkBlockhash(res[0].hash, ???)
-				// hash should equal keccack256(rlp([blockhash_10, 20]))
-				checkBlockhash(res[1].hash, keccack256(rlp([blockhash_10, 20])))
-				// hash shuld equal keccack256(rlp([blockhash_20, 30]))
-				checkBlockhash(res[2].hash, keccack256(rlp([blockhash_20, 30])))
+				checkBlockhash(res[0].hash, head_hash)
 
 				// should equal to real heads blockhash
-				checkBlockhash(res[0].calls[0].returnData, ???)
+				checkBlockhash(res[0].calls[0].returnData, head_hash)
 				// should equal first generated blocks hash
-				checkBlockhash(res[1].calls[0].returnData, ???)
+				checkBlockhash(res[1].calls[0].returnData, res[0].hash)
 				// should equal keccack256(rlp([blockhash_20, 29]))
-				checkBlockhash(res[2].calls[0].returnData, keccack256(rlp([blockhash_20, 29])))
+				checkBlockhash(res[2].calls[0].returnData, keccack256(rlp([res[0].hash, 29])))
 				return nil
 			},
 		},
@@ -722,17 +707,12 @@ var EthMulticall = MethodTests{
 						Input: hex2Bytes("0xee82ac5e0000000000000000000000000000000000000000000000000000000000000001"),
 					}},
 				}, {
-					StateOverrides: &StateOverride{
-						common.Address{0xc2}: OverrideAccount{
-							Code: blockHashCallerByteCode()
-						},
-					},
 					BlockOverrides: &BlockOverrides{
 						Number: (*hexutil.Big)(big.NewInt(20)),
 					},
 					Calls: []TransactionArgs{{
 						From:  &common.Address{0xc0},
-						Input: hex2Bytes("0xee82ac5e0000000000000000000000000000000000000000000000000000000000000010"),
+						Input: hex2Bytes("0xee82ac5e0000000000000000000000000000000000000000000000000000000000000001"),
 					}},
 				}, 2 }, //todo, we need some initial blocks for this, so that we can start before head
 				res := make([][]interface{}, 0)
@@ -750,14 +730,8 @@ var EthMulticall = MethodTests{
 				}
 				checkBlockNumber(res[0].number, 10)
 				checkBlockNumber(res[1].number, 20)
-				// should get generated blockhash for block 3
-				checkBlockhash(res[0].hash, ???)
-				// hash should equal keccack256(rlp([blockhash_10, 20]))
-				checkBlockhash(res[1].hash, keccack256(rlp([blockhash_10, 20])))
-				// should equal to blockhash of block 2
-				checkBlockhash(res[0].calls[0].returnData, ???)
-				// should equal first generated blocks hash
-				checkBlockhash(res[1].calls[0].returnData, ???)
+				checkBlockhash(res[0].calls[0].returnData, block_2_hash)
+				checkBlockhash(res[1].calls[0].returnData, keccack256(rlp([res[0].hash, 19])))
 				
 				return nil
 			},
