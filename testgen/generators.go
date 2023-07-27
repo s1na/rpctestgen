@@ -1136,6 +1136,51 @@ var EthMulticall = MethodTests{
 				return err
 			},
 		},
+		{
+			"multicall-override-all-in-blocks",
+			"override all values in block and see that they are set in return value",
+			func(ctx context.Context, t *T) error {
+				feeRecipient := common.Address{0xc2}
+				params := multicallOpts{
+					Blocks: []CallBatch{{
+						BlockOverrides: &BlockOverrides{
+							Number:       (*hexutil.Big)(big.NewInt(1001)),
+							Time:         getUint64Ptr(1003),
+							GasLimit:     getUint64Ptr(1004),
+							FeeRecipient: &feeRecipient,
+							PrevRandao:   &common.Hash{0xc3},
+							BaseFee:      (*hexutil.Big)(big.NewInt(1007)),
+						},
+					}},
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.Blocks) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.Blocks))
+				}
+				if res[0].Number != 1001 {
+					return fmt.Errorf("unexpected Number (have: %d, want: %d)", res[0].Number, 1001)
+				}
+				if res[0].Time != 1003 {
+					return fmt.Errorf("unexpectedTime (have: %d, want: %d)", res[0].Time, 1003)
+				}
+				if res[0].GasLimit != 1004 {
+					return fmt.Errorf("unexpected GasLimit (have: %d, want: %d)", res[0].GasLimit, 1004)
+				}
+				if res[0].FeeRecipient != feeRecipient {
+					return fmt.Errorf("unexpected FeeRecipient (have: %d, want: %d)", res[0].FeeRecipient, feeRecipient)
+				}
+				if res[0].PrevRandao != &(common.Hash{0xc3}) {
+					return fmt.Errorf("unexpected PrevRandao (have: %d, want: %d)", res[0].PrevRandao, 0xc3)
+				}
+				if res[0].BaseFeePerGas != (*hexutil.Big)(big.NewInt(1007)) {
+					return fmt.Errorf("unexpected BaseFeePerGas (have: %d, want: %d)", res[0].BaseFeePerGas.ToInt(), 1007)
+				}
+				return nil
+			},
+		},
 	},
 }
 
@@ -1799,13 +1844,12 @@ type TransactionArgs struct {
 
 // BlockOverrides is a set of header fields to override.
 type BlockOverrides struct {
-	Number     *hexutil.Big    `json:"number,omitempty"`
-	Difficulty *hexutil.Big    `json:"difficulty,omitempty"`
-	Time       *hexutil.Uint64 `json:"time,omitempty"`
-	GasLimit   *hexutil.Uint64 `json:"gasLimit,omitempty"`
-	Coinbase   *common.Address `json:"coinbase,omitempty"`
-	Random     *common.Hash    `json:"random,omitempty"`
-	BaseFee    *hexutil.Big    `json:"baseFee,omitempty"`
+	Number       *hexutil.Big    `json:"number,omitempty"`
+	Time         *hexutil.Uint64 `json:"time,omitempty"`
+	GasLimit     *hexutil.Uint64 `json:"gasLimit,omitempty"`
+	FeeRecipient *common.Address `json:"feeRecipient,omitempty"`
+	PrevRandao   *common.Hash    `json:"prevRandao,omitempty"`
+	BaseFee      *hexutil.Big    `json:"baseFeePerGas,omitempty"`
 }
 
 // OverrideAccount indicates the overriding fields of account during the execution
@@ -1848,6 +1892,7 @@ type blockResult struct {
 	GasUsed       hexutil.Uint64 `json:"gasUsed"`
 	FeeRecipient  common.Address `json:"feeRecipient"`
 	BaseFeePerGas *hexutil.Big   `json:"baseFeePerGas"`
+	PrevRandao    *common.Hash   `json:"prevRandao,omitempty"`
 	Calls         []callResult   `json:"calls"`
 }
 
