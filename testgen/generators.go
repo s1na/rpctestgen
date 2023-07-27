@@ -646,7 +646,7 @@ var EthMulticall = MethodTests{
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
 							To:    &common.Address{0xc2},
-							Input: hex2Bytes("0xee82ac5e0000000000000000000000000000000000000000000000000000000000000001"),
+							Input: hex2Bytes("ee82ac5e0000000000000000000000000000000000000000000000000000000000000001"),
 						}},
 					}},
 				}
@@ -689,7 +689,7 @@ var EthMulticall = MethodTests{
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
 							To:    &common.Address{0xc2},
-							Input: hex2Bytes("0xee82ac5e0000000000000000000000000000000000000000000000000000000000000001"),
+							Input: hex2Bytes("ee82ac5e0000000000000000000000000000000000000000000000000000000000000001"),
 						}},
 					}, {
 						BlockOverrides: &BlockOverrides{
@@ -698,7 +698,7 @@ var EthMulticall = MethodTests{
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
 							To:    &common.Address{0xc2},
-							Input: hex2Bytes("0xee82ac5e0000000000000000000000000000000000000000000000000000000000000010"),
+							Input: hex2Bytes("ee82ac5e0000000000000000000000000000000000000000000000000000000000000010"),
 						}},
 					}, {
 						BlockOverrides: &BlockOverrides{
@@ -707,7 +707,7 @@ var EthMulticall = MethodTests{
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
 							To:    &common.Address{0xc2},
-							Input: hex2Bytes("0xee82ac5e0000000000000000000000000000000000000000000000000000000000000001"),
+							Input: hex2Bytes("ee82ac5e000000000000000000000000000000000000000000000000000000000000001D"),
 						}},
 					}},
 				}
@@ -727,8 +727,6 @@ var EthMulticall = MethodTests{
 						return fmt.Errorf("unexpected status value(have: %d, want: %d)", res[i].Calls[0].Status, 0x1)
 					}
 				}
-				head_hash := common.Hash{0x1} // TODO
-
 				if err := checkBlockNumber(res[0].Number, 10); err != nil {
 					return err
 				}
@@ -738,12 +736,9 @@ var EthMulticall = MethodTests{
 				if err := checkBlockNumber(res[2].Number, 30); err != nil {
 					return err
 				}
-				if err := checkBlockHash(res[0].Hash, head_hash); err != nil {
-					return err
-				}
 
-				// should equal to real heads blockhash
-				if err := checkBlockHash(common.BytesToHash(res[0].Calls[0].ReturnValue), head_hash); err != nil {
+				// should equal to block number ones hash
+				if err := checkBlockHash(common.BytesToHash(res[0].Calls[0].ReturnValue), t.chain.GetHeaderByNumber(1).Hash()); err != nil {
 					return err
 				}
 				// should equal first generated blocks hash
@@ -751,7 +746,7 @@ var EthMulticall = MethodTests{
 					return err
 				}
 				// should equal keccack256(rlp([blockhash_20, 29]))
-				if err := checkBlockHash(common.BytesToHash(res[2].Calls[0].ReturnValue), common.Hash{0x1}); err != nil {
+				if err := checkBlockHash(common.BytesToHash(res[2].Calls[0].ReturnValue), common.BytesToHash(*hex2Bytes("9f77a47d3fbad17b981f2f21022effd528670e580382921735559c1f31774191"))); err != nil {
 					return err
 				}
 				return nil
@@ -777,7 +772,7 @@ var EthMulticall = MethodTests{
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
 							To:    &common.Address{0xc2},
-							Input: hex2Bytes("0xee82ac5e0000000000000000000000000000000000000000000000000000000000000001"),
+							Input: hex2Bytes("ee82ac5e0000000000000000000000000000000000000000000000000000000000000002"),
 						}},
 					}, {
 						BlockOverrides: &BlockOverrides{
@@ -786,11 +781,11 @@ var EthMulticall = MethodTests{
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
 							To:    &common.Address{0xc2},
-							Input: hex2Bytes("0xee82ac5e0000000000000000000000000000000000000000000000000000000000000001"),
+							Input: hex2Bytes("ee82ac5e0000000000000000000000000000000000000000000000000000000000000013"),
 						}},
 					}},
 				}
-				res := make([]blockResult, 0) //todo, we need some initial blocks for this, so that we can start before head
+				res := make([]blockResult, 0)
 				if err := t.rpc.Call(&res, "eth_multicallV1", params, (*hexutil.Big)(big.NewInt(1))); err != nil {
 					return err
 				}
@@ -813,11 +808,12 @@ var EthMulticall = MethodTests{
 				if err := checkBlockNumber(res[1].Number, 20); err != nil {
 					return err
 				}
-				if err := checkBlockHash(common.BytesToHash(res[0].Calls[0].ReturnValue), t.chain.GetHeaderByNumber(2).Hash()); err != nil {
+				//keccack256(rlp([blockhash_1, 2])
+				if err := checkBlockHash(common.BytesToHash(res[0].Calls[0].ReturnValue), common.BytesToHash(*hex2Bytes("b71624aa776736b9a340cae6a536e93c71e376907a5b23c196aa056450a2b983"))); err != nil {
 					return err
 				}
-				//keccack256(rlp([res[0].hash, 19])
-				if err := checkBlockHash(common.BytesToHash(res[1].Calls[0].ReturnValue), common.Hash{0x2}); err != nil {
+				//keccack256(rlp([blockhash_10, 19])
+				if err := checkBlockHash(common.BytesToHash(res[1].Calls[0].ReturnValue), common.BytesToHash(*hex2Bytes("5679ee58a0ff6a8fa7b177db27c76774f1ddc04464d1999aad7aba7ac911593b"))); err != nil {
 					return err
 				}
 
@@ -845,18 +841,18 @@ var EthMulticall = MethodTests{
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
 							To:    &common.Address{0xc3},
-							Input: hex2Bytes("0xdce4a4470000000000000000000000000000000000000000000000000000000000000002"), //at(0x2)
+							Input: hex2Bytes("dce4a4470000000000000000000000000000000000000000000000000000000000000002"), //at(0x2)
 						}},
 					}, {
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
-							Input: hex2Bytes("0x83197ef0"), //destroy()
+							Input: hex2Bytes("83197ef0"), //destroy()
 						}},
 					}, {
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
 							To:    &common.Address{0xc3},
-							Input: hex2Bytes("0xdce4a4470000000000000000000000000000000000000000000000000000000000000002"), //at(0x2)
+							Input: hex2Bytes("dce4a4470000000000000000000000000000000000000000000000000000000000000002"), //at(0x2)
 						}},
 					}, {
 						StateOverrides: &StateOverride{
@@ -868,7 +864,7 @@ var EthMulticall = MethodTests{
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
 							To:    &common.Address{0xc3},
-							Input: hex2Bytes("0xdce4a4470000000000000000000000000000000000000000000000000000000000000002"), //at(0x2)
+							Input: hex2Bytes("dce4a4470000000000000000000000000000000000000000000000000000000000000002"), //at(0x2)
 						}},
 					}},
 				}
@@ -913,12 +909,12 @@ var EthMulticall = MethodTests{
 							{
 								From:  &common.Address{0xc0},
 								To:    &common.Address{0xc2},
-								Input: hex2Bytes("0x815b8ab400000000000000000000000000000000000000000000000000000000000f4240"), //spendGas(1000000)
+								Input: hex2Bytes("815b8ab400000000000000000000000000000000000000000000000000000000000f4240"), //spendGas(1000000)
 							},
 							{
 								From:  &common.Address{0xc0},
 								To:    &common.Address{0xc2},
-								Input: hex2Bytes("0x815b8ab400000000000000000000000000000000000000000000000000000000000f4240"), //spendGas(1000000)
+								Input: hex2Bytes("815b8ab400000000000000000000000000000000000000000000000000000000000f4240"), //spendGas(1000000)
 							},
 						}},
 					},
