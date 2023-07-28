@@ -841,18 +841,19 @@ var EthMulticall = MethodTests{
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
 							To:    &common.Address{0xc3},
-							Input: hex2Bytes("dce4a4470000000000000000000000000000000000000000000000000000000000000002"), //at(0x2)
+							Input: hex2Bytes("dce4a447000000000000000000000000c200000000000000000000000000000000000000"), //at(0xc2)
 						}},
 					}, {
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
+							To:    &common.Address{0xc2},
 							Input: hex2Bytes("83197ef0"), //destroy()
 						}},
 					}, {
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
 							To:    &common.Address{0xc3},
-							Input: hex2Bytes("dce4a4470000000000000000000000000000000000000000000000000000000000000002"), //at(0x2)
+							Input: hex2Bytes("dce4a447000000000000000000000000c200000000000000000000000000000000000000"), //at(0xc2)
 						}},
 					}, {
 						StateOverrides: &StateOverride{
@@ -864,7 +865,7 @@ var EthMulticall = MethodTests{
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
 							To:    &common.Address{0xc3},
-							Input: hex2Bytes("dce4a4470000000000000000000000000000000000000000000000000000000000000002"), //at(0x2)
+							Input: hex2Bytes("dce4a447000000000000000000000000c200000000000000000000000000000000000000"), //at(0xc2)
 						}},
 					}},
 				}
@@ -875,14 +876,15 @@ var EthMulticall = MethodTests{
 				if len(res) != len(params.Blocks) {
 					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.Blocks))
 				}
-				if len(res[1].Calls[0].ReturnValue) > 0 {
-					return fmt.Errorf("overrided contract does not have contract code")
+				noCode := "0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000"
+				if res[1].Calls[0].ReturnValue.String() == noCode {
+					return fmt.Errorf("res 1 overrided contract does not have contract code: %s", res[1].Calls[0].ReturnValue.String())
 				}
-				if len(res[3].Calls[0].ReturnValue) == 0 {
-					return fmt.Errorf("self destructed code does have contract code")
+				if res[3].Calls[0].ReturnValue.String() != noCode {
+					return fmt.Errorf("res 3 self destructed code does have contract code: %s", res[3].Calls[0].ReturnValue.String())
 				}
-				if len(res[5].Calls[0].ReturnValue) > 0 {
-					return fmt.Errorf("overrided contract does not have contract code")
+				if res[5].Calls[0].ReturnValue.String() == noCode {
+					return fmt.Errorf("res 5 overrided contract does not have contract code: %s", res[5].Calls[0].ReturnValue.String())
 				}
 				return nil
 			},
@@ -926,10 +928,135 @@ var EthMulticall = MethodTests{
 				return nil
 			},
 		},
-		//TODO, add test on how to overflow the multicall, but not single transaction / block. To achieve this, we need to know what is the limit set to the node
 		{
 			"multicall-eth-send-should-produce-logs",
-			"when sending eth we should get eth logs",
+			"when sending eth we should get ETH logs when traceTransfers is set",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					Blocks: []CallBatch{{
+						StateOverrides: &StateOverride{
+							common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(2000)},
+						},
+						Calls: []TransactionArgs{{
+							From:  &common.Address{0xc0},
+							To:    &common.Address{0xc1},
+							Value: (*hexutil.Big)(big.NewInt(1000)),
+						}},
+					}},
+					TraceTransfers: true,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.Blocks) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.Blocks))
+				}
+				if len(res[0].Calls[0].Logs) != 1 {
+					return fmt.Errorf("unexpected number of logs (have: %d, want: %d)", len(res[0].Calls[0].Logs), 1)
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-eth-send-should-not-produce-logs-on-revert",
+			"we should not be producing eth logs if the transaction reverts and ETH is not sent",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					Blocks: []CallBatch{{
+						StateOverrides: &StateOverride{
+							common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(2000)},
+							common.Address{0xc1}: OverrideAccount{Code: getRevertingContract()},
+						},
+						Calls: []TransactionArgs{{
+							From:  &common.Address{0xc0},
+							To:    &common.Address{0xc1},
+							Value: (*hexutil.Big)(big.NewInt(1000)),
+						}},
+					}},
+					TraceTransfers: true,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.Blocks) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.Blocks))
+				}
+				if len(res[0].Calls[0].Logs) != 0 {
+					return fmt.Errorf("unexpected number of logs (have: %d, want: %d)", len(res[0].Calls[0].Logs), 0)
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-eth-send-should--produce-more-logs-on-forward",
+			"we should be getting more logs if eth is forwarded",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					Blocks: []CallBatch{{
+						StateOverrides: &StateOverride{
+							common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(2000)},
+							common.Address{0xc1}: OverrideAccount{Code: getEthForwarder()},
+						},
+						Calls: []TransactionArgs{{
+							From:  &common.Address{0xc0},
+							To:    &common.Address{0xc1},
+							Value: (*hexutil.Big)(big.NewInt(1000)),
+							Input: hex2Bytes("4b64e4920000000000000000000000000000000000000000000000000000000000000001"),
+						}},
+					}},
+					TraceTransfers: true,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.Blocks) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.Blocks))
+				}
+				if len(res[0].Calls[0].Logs) != 2 {
+					return fmt.Errorf("unexpected number of logs (have: %d, want: %d)", len(res[0].Calls[0].Logs), 2)
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-eth-send-should--produce-no-logs-on-forward-revert",
+			"we should be getting no logs if eth is forwarded but then the tx reverts",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					Blocks: []CallBatch{{
+						StateOverrides: &StateOverride{
+							common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(2000)},
+							common.Address{0xc1}: OverrideAccount{Code: getEthForwarder()},
+							common.Address{0xc2}: OverrideAccount{Code: getRevertingContract()},
+						},
+						Calls: []TransactionArgs{{
+							From:  &common.Address{0xc0},
+							To:    &common.Address{0xc1},
+							Value: (*hexutil.Big)(big.NewInt(1000)),
+							Input: hex2Bytes("4b64e49200000000000000000000000000000000000000000000000000000000000000c2"), //foward(0xc2)
+						}},
+					}},
+					TraceTransfers: true,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.Blocks) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.Blocks))
+				}
+				if len(res[0].Calls[0].Logs) != 0 {
+					return fmt.Errorf("unexpected number of logs (have: %d, want: %d)", len(res[0].Calls[0].Logs), 0)
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-eth-send-should-not-produce-logs-by-default",
+			"when sending eth we should not get ETH logs by default",
 			func(ctx context.Context, t *T) error {
 				params := multicallOpts{
 					Blocks: []CallBatch{{
@@ -950,8 +1077,8 @@ var EthMulticall = MethodTests{
 				if len(res) != len(params.Blocks) {
 					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.Blocks))
 				}
-				if len(res[0].Calls[0].Logs) != 1 {
-					return fmt.Errorf("unexpected number of logs (have: %d, want: %d)", len(res[0].Calls[0].Logs), 1)
+				if len(res[0].Calls[0].Logs) != 0 {
+					return fmt.Errorf("unexpected number of logs (have: %d, want: %d)", len(res[0].Calls[0].Logs), 0)
 				}
 				return nil
 			},
@@ -1113,7 +1240,7 @@ var EthMulticall = MethodTests{
 		},
 		{
 			"multicall-multiple-account-overrides",
-			"override an account multple times",
+			"override an account multiple times",
 			func(ctx context.Context, t *T) error {
 				params := multicallOpts{
 					Blocks: []CallBatch{{
@@ -1134,6 +1261,45 @@ var EthMulticall = MethodTests{
 					return err
 				}
 				return err
+			},
+		},
+		{
+			"multicall-moved-contract-should-be-useable",
+			"when contract is moved, the moved contract should still work",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					Blocks: []CallBatch{
+						{
+							StateOverrides: &StateOverride{
+								common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(2000)},
+								common.Address{0xc2}: OverrideAccount{Code: getEthForwarder()},
+							},
+						},
+						{
+							StateOverrides: &StateOverride{
+								common.Address{0xc2}: OverrideAccount{MoveToAddress: &common.Address{0xc1}},
+							},
+							Calls: []TransactionArgs{{
+								From:  &common.Address{0xc0},
+								To:    &common.Address{0xc1},
+								Value: (*hexutil.Big)(big.NewInt(1000)),
+								Input: hex2Bytes("4b64e4920000000000000000000000000000000000000000000000000000000000000001"),
+							}},
+						},
+					},
+					TraceTransfers: true,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.Blocks) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.Blocks))
+				}
+				if len(res[1].Calls[0].Logs) != 2 {
+					return fmt.Errorf("unexpected number of logs (have: %d, want: %d)", len(res[1].Calls[0].Logs), 2)
+				}
+				return nil
 			},
 		},
 		{
@@ -1177,6 +1343,110 @@ var EthMulticall = MethodTests{
 				}
 				if res[0].BaseFeePerGas != (*hexutil.Big)(big.NewInt(1007)) {
 					return fmt.Errorf("unexpected BaseFeePerGas (have: %d, want: %d)", res[0].BaseFeePerGas.ToInt(), 1007)
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-override-ecrecover",
+			"override ecrecover",
+			func(ctx context.Context, t *T) error {
+				ecRecoverAddress := common.BytesToAddress(*hex2Bytes("0000000000000000000000000000000000000001"))
+				ecRecoverMovedToAddress := common.BytesToAddress(*hex2Bytes("0000000000000000000000000000000000123456"))
+				params := multicallOpts{
+					Blocks: []CallBatch{{
+						StateOverrides: &StateOverride{
+							ecRecoverAddress: OverrideAccount{
+								Code:          getEcRecoverOverride(),
+								MoveToAddress: &ecRecoverMovedToAddress,
+							},
+							common.Address{0xc1}: OverrideAccount{Balance: newRPCBalance(200000)},
+							common.Address{0xc2}: OverrideAccount{Code: getEcRecoverCaller()},
+						},
+						Calls: []TransactionArgs{
+							{ // call with invalid params, should fail (resolve to 0x0)
+								From:  &common.Address{0xc1},
+								To:    &common.Address{0xc2},
+								Input: hex2Bytes("265dc68c4554480000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007b45544800000000000000000000000000000000000000000000000000000000004554480000000000000000000000000000000000000000000000000000000000"),
+							},
+							{ // call with valid params, should resolve to 0xb11CaD98Ad3F8114E0b3A1F6E7228bc8424dF48a
+								From:  &common.Address{0xc1},
+								To:    &common.Address{0xc2},
+								Input: hex2Bytes("265dc68c1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8000000000000000000000000000000000000000000000000000000000000001cb7cf302145348387b9e69fde82d8e634a0f8761e78da3bfa059efced97cbed0d2a66b69167cafe0ccfc726aec6ee393fea3cf0e4f3f9c394705e0f56d9bfe1c9"),
+							},
+							{ // add override
+								From:  &common.Address{0xc1},
+								To:    &ecRecoverAddress,
+								Input: hex2Bytes("c00692604554480000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007b45544800000000000000000000000000000000000000000000000000000000004554480000000000000000000000000000000000000000000000000000000000000000000000000000000000d8da6bf26964af9d7eed9e03e53415d37aa96045"),
+							},
+							{ // now it should resolve to 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045
+								From:  &common.Address{0xc1},
+								To:    &common.Address{0xc2},
+								Input: hex2Bytes("265dc68c4554480000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007b45544800000000000000000000000000000000000000000000000000000000004554480000000000000000000000000000000000000000000000000000000000"),
+							},
+							{ // call with valid params, should resolve to 0xb11CaD98Ad3F8114E0b3A1F6E7228bc8424dF48a
+								From:  &common.Address{0xc1},
+								To:    &common.Address{0xc2},
+								Input: hex2Bytes("265dc68c1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8000000000000000000000000000000000000000000000000000000000000001cb7cf302145348387b9e69fde82d8e634a0f8761e78da3bfa059efced97cbed0d2a66b69167cafe0ccfc726aec6ee393fea3cf0e4f3f9c394705e0f56d9bfe1c9"),
+							},
+							{ // call with new invalid params, should fail (resolve to 0x0)
+								From:  &common.Address{0xc1},
+								To:    &common.Address{0xc2},
+								Input: hex2Bytes("265dc68c4554480000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007b45544800000000000000000000000000000000000000000000000000000000004554490000000000000000000000000000000000000000000000000000000000"),
+							},
+						},
+					}},
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.Blocks) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.Blocks))
+				}
+				if len(res[0].Calls) != len(params.Blocks[0].Calls) {
+					return fmt.Errorf("unexpected number of call results (have: %d, want: %d)", len(res[0].Calls), len(params.Blocks[0].Calls))
+				}
+				zeroAddr := common.Address{0x0}
+				if common.BytesToAddress(res[0].Calls[0].ReturnValue) != zeroAddr {
+					return fmt.Errorf("unexpected returnvalue (have: %d, want: %d)", common.BytesToAddress(res[0].Calls[0].ReturnValue), zeroAddr)
+				}
+				successReturn := common.BytesToAddress(*hex2Bytes("b11CaD98Ad3F8114E0b3A1F6E7228bc8424dF48a"))
+				if common.BytesToAddress(res[0].Calls[1].ReturnValue) != successReturn {
+					return fmt.Errorf("unexpected calls 1 returnvalue (have: %d, want: %d)", common.BytesToAddress(res[0].Calls[1].ReturnValue), successReturn)
+				}
+				vitalikReturn := common.BytesToAddress(*hex2Bytes("d8dA6BF26964aF9D7eEd9e03E53415D37aA96045"))
+				if common.BytesToAddress(res[0].Calls[3].ReturnValue) != vitalikReturn {
+					return fmt.Errorf("unexpected calls 3 returnvalue (have: %d, want: %d)", common.BytesToAddress(res[0].Calls[3].ReturnValue), vitalikReturn)
+				}
+				if common.BytesToAddress(res[0].Calls[4].ReturnValue) != successReturn {
+					return fmt.Errorf("unexpected calls 4 returnvalue (have: %d, want: %d)", common.BytesToAddress(res[0].Calls[4].ReturnValue), successReturn)
+				}
+				if common.BytesToAddress(res[0].Calls[5].ReturnValue) != zeroAddr {
+					return fmt.Errorf("unexpected calls 5 returnvalue (have: %d, want: %d)", common.BytesToAddress(res[0].Calls[5].ReturnValue), zeroAddr)
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-override-sha256",
+			"override sha256 precompile",
+			func(ctx context.Context, t *T) error {
+				sha256Address := common.BytesToAddress(*hex2Bytes("0000000000000000000000000000000000000002"))
+				sha256MovedToAddress := common.BytesToAddress(*hex2Bytes("0000000000000000000000000000000000123456"))
+				params := multicallOpts{
+					Blocks: []CallBatch{{
+						StateOverrides: &StateOverride{
+							sha256Address: OverrideAccount{
+								Code:          hex2Bytes(""),
+								MoveToAddress: &sha256MovedToAddress,
+							},
+						},
+					}},
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
 				}
 				return nil
 			},
@@ -1878,10 +2148,9 @@ type multicallOpts struct {
 
 // CallBatch is a batch of calls to be simulated sequentially.
 type CallBatch struct {
-	BlockOverrides    *BlockOverrides   `json:"blockOverrides,omitempty"`
-	StateOverrides    *StateOverride    `json:"stateOverrides,omitempty"`
-	ECRecoverOverride *hexutil.Bytes    `json:"ecrecoverOverride,omitempty"`
-	Calls             []TransactionArgs `json:"calls,omitempty"`
+	BlockOverrides *BlockOverrides   `json:"blockOverrides,omitempty"`
+	StateOverrides *StateOverride    `json:"stateOverrides,omitempty"`
+	Calls          []TransactionArgs `json:"calls,omitempty"`
 }
 
 type blockResult struct {
@@ -1904,17 +2173,6 @@ type callResult struct {
 	Status      hexutil.Uint64 `json:"status"`
 	Error       *string        `json:"error,omitempty"`
 }
-
-/*
-type multicallBlockResponse struct {
-	Data  []blockResult	`json:"data,omitempty"`
-	Error *Error      	`json:"error,omitempty"`
-}
-
-type Error struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
-}*/
 
 type transfer struct {
 	From  common.Address `json:"from"`
