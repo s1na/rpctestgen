@@ -1825,7 +1825,7 @@ var EthMulticall = MethodTests{
 			"override storage slots",
 			func(ctx context.Context, t *T) error {
 				stateChanges := make(map[common.Hash]common.Hash)
-				stateChanges[common.BytesToHash(*hex2Bytes("290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563"))] = common.Hash{0x12} //slot 0 -> 0x12
+				stateChanges[common.BytesToHash(*hex2Bytes("0000000000000000000000000000000000000000000000000000000000000000"))] = common.Hash{0x12} //slot 0 -> 0x12
 				params := multicallOpts{
 					Blocks: []CallBatch{
 						{
@@ -1915,15 +1915,15 @@ var EthMulticall = MethodTests{
 					return fmt.Errorf("unexpected call result (res[0].Calls[3]) (have: %s, want: %s)", res[0].Calls[3].ReturnValue.String(), "0x0000000000000000000000000000000000000000000000000000000000000002")
 				}
 
-				if res[1].Calls[0].ReturnValue.String() != "0x0000000000000000000000000000000000000000000000000000000000000012" {
-					return fmt.Errorf("unexpected call result (res[1].Calls[0]) (have: %s, want: %s)", res[0].Calls[3].ReturnValue.String(), "0x0000000000000000000000000000000000000000000000000000000000000012")
+				if res[1].Calls[0].ReturnValue.String() != "0x1200000000000000000000000000000000000000000000000000000000000000" {
+					return fmt.Errorf("unexpected call result (res[1].Calls[0]) (have: %s, want: %s)", res[0].Calls[3].ReturnValue.String(), "0x1200000000000000000000000000000000000000000000000000000000000000")
 				}
 				if res[1].Calls[1].ReturnValue.String() != "0x0000000000000000000000000000000000000000000000000000000000000002" {
 					return fmt.Errorf("unexpected call result (res[1].Calls[1]) (have: %s, want: %s)", res[0].Calls[1].ReturnValue.String(), "0x0000000000000000000000000000000000000000000000000000000000000002")
 				}
 
-				if res[2].Calls[0].ReturnValue.String() != "0x0000000000000000000000000000000000000000000000000000000000000012" {
-					return fmt.Errorf("unexpected call result (res[2].Calls[0]) (have: %s, want: %s)", res[2].Calls[0].ReturnValue.String(), "0x0000000000000000000000000000000000000000000000000000000000000012")
+				if res[2].Calls[0].ReturnValue.String() != "0x1200000000000000000000000000000000000000000000000000000000000000" {
+					return fmt.Errorf("unexpected call result (res[2].Calls[0]) (have: %s, want: %s)", res[2].Calls[0].ReturnValue.String(), "0x1200000000000000000000000000000000000000000000000000000000000000")
 				}
 				if res[2].Calls[1].ReturnValue.String() != "0x0000000000000000000000000000000000000000000000000000000000000000" {
 					return fmt.Errorf("unexpected call result (res[2].Calls[1]) (have: %s, want: %s)", res[2].Calls[1].ReturnValue.String(), "0x0000000000000000000000000000000000000000000000000000000000000000")
@@ -2015,7 +2015,7 @@ var EthMulticall = MethodTests{
 			"move contract with storage slots being overriden",
 			func(ctx context.Context, t *T) error {
 				stateChanges := make(map[common.Hash]common.Hash)
-				stateChanges[common.BytesToHash(*hex2Bytes("290decd9548b62a8d60345a988386fc84ba6bc95484008f6362f93160ef3e563"))] = common.Hash{0x12} //slot 0 -> 0x12
+				stateChanges[common.BytesToHash(*hex2Bytes("0000000000000000000000000000000000000000000000000000000000000000"))] = common.Hash{0x12} //slot 0 -> 0x12
 				params := multicallOpts{
 					Blocks: []CallBatch{
 						{
@@ -2051,7 +2051,7 @@ var EthMulticall = MethodTests{
 								{
 									From:  &common.Address{0xc0},
 									To:    &common.Address{0xc1},
-									Input: hex2Bytes("0ff4c9160000000000000000000000000000000000000000000000000000000000000000"), // gets storage slot 0, should return error as there should not be code there anymore
+									Input: hex2Bytes("0ff4c9160000000000000000000000000000000000000000000000000000000000000000"), // gets storage slot 0, should'nt return anything
 								},
 								{
 									From:  &common.Address{0xc0},
