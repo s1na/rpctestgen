@@ -1558,6 +1558,81 @@ var EthMulticall = MethodTests{
 			},
 		},
 		{
+			"multicall-move-to-address-with-nonce",
+			"move address with nonce",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					Blocks: []CallBatch{
+						{
+							StateOverrides: &StateOverride{
+								common.Address{0xc0}: OverrideAccount{Nonce: getUint64Ptr(5)},
+							},
+						}, {
+							StateOverrides: &StateOverride{
+								common.Address{0xc0}: OverrideAccount{MoveToAddress: &common.Address{0xc1}},
+							},
+							Calls: []TransactionArgs{
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc0},
+									Nonce: getUint64Ptr(0),
+								},
+								{
+									From:  &common.Address{0xc1},
+									To:    &common.Address{0xc1},
+									Nonce: getUint64Ptr(5),
+								},
+							},
+						},
+					},
+					Validation: true,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.Blocks) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.Blocks))
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-move-to-address-with-nonce",
+			"Error: MoveToAddress referenced itself in replacement",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					Blocks: []CallBatch{
+						{
+							StateOverrides: &StateOverride{
+								common.Address{0xc0}: OverrideAccount{Nonce: getUint64Ptr(5)},
+							},
+						}, {
+							StateOverrides: &StateOverride{
+								common.Address{0xc0}: OverrideAccount{MoveToAddress: &common.Address{0xc1}},
+							},
+							Calls: []TransactionArgs{
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc1},
+									Nonce: getUint64Ptr(5), //should fail
+								},
+							},
+						},
+					},
+					Validation: true,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.Blocks) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.Blocks))
+				}
+				return nil
+			},
+		},
+		{
 			"multicall-moved-contract-should-be-useable",
 			"when contract is moved, the moved contract should still work",
 			func(ctx context.Context, t *T) error {
