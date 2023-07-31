@@ -907,7 +907,7 @@ var EthMulticall = MethodTests{
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
 							To:    &common.Address{0xc2},
-							Input: hex2Bytes("ee82ac5e000000000000000000000000000000000000000000000000000000000000001D"),
+							Input: hex2Bytes("ee82ac5e000000000000000000000000000000000000000000000000000000000000001d"),
 						}},
 					}},
 				}
