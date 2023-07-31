@@ -1103,6 +1103,67 @@ var EthMulticall = MethodTests{
 			},
 		},
 		{
+			"multicall-override-address-twice",
+			"override address twice",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					Blocks: []CallBatch{{
+						StateOverrides: &StateOverride{
+							common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(2000)},
+							common.Address{0xc0}: OverrideAccount{Code: getRevertingContract()},
+						},
+						Calls: []TransactionArgs{{
+							From:  &common.Address{0xc0},
+							To:    &common.Address{0xc1},
+							Value: (*hexutil.Big)(big.NewInt(1000)),
+						}},
+					}},
+					TraceTransfers: true,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-override-address-twice-in-separate-blocks",
+			"override address twice in separate blocks",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					Blocks: []CallBatch{
+						{
+							StateOverrides: &StateOverride{
+								common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(2000)},
+							},
+							Calls: []TransactionArgs{{
+								From:  &common.Address{0xc0},
+								To:    &common.Address{0xc1},
+								Value: (*hexutil.Big)(big.NewInt(1000)),
+							}},
+						},
+						{
+							StateOverrides: &StateOverride{
+								common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(2000)},
+							},
+							Calls: []TransactionArgs{{
+								From:  &common.Address{0xc0},
+								To:    &common.Address{0xc1},
+								Value: (*hexutil.Big)(big.NewInt(1000)),
+							}},
+						},
+					},
+					TraceTransfers: true,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
 			"multicall-eth-send-should-not-produce-logs-on-revert",
 			"we should not be producing eth logs if the transaction reverts and ETH is not sent",
 			func(ctx context.Context, t *T) error {
@@ -1282,8 +1343,8 @@ var EthMulticall = MethodTests{
 			},
 		},
 		{
-			"multicall-basefee-too-low",
-			"Error: BaseFee too low",
+			"multicall-basefee-too-low-with-validation",
+			"Error: BaseFee too low with validation",
 			func(ctx context.Context, t *T) error {
 				params := multicallOpts{
 					Blocks: []CallBatch{{
@@ -1300,6 +1361,39 @@ var EthMulticall = MethodTests{
 							MaxPriorityFeePerGas: (*hexutil.Big)(big.NewInt(0)),
 						}},
 					}},
+					Validation: true,
+				}
+				res := make([]blockResult, 0)
+				err := t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				if err := checkError(err, -38012); err != nil {
+					return err
+				}
+				if err := checkStatus(res[0].Calls[0].Status, 0x2); err != nil {
+					return err
+				}
+				return err
+			},
+		},
+		{
+			"multicall-basefee-too-low-without-validation",
+			"Error: BaseFee too low with no validation",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					Blocks: []CallBatch{{
+						StateOverrides: &StateOverride{
+							common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(2000)},
+						},
+						BlockOverrides: &BlockOverrides{
+							BaseFee: (*hexutil.Big)(big.NewInt(10)),
+						},
+						Calls: []TransactionArgs{{
+							From:                 &common.Address{0xc1},
+							To:                   &common.Address{0xc1},
+							MaxFeePerGas:         (*hexutil.Big)(big.NewInt(0)),
+							MaxPriorityFeePerGas: (*hexutil.Big)(big.NewInt(0)),
+						}},
+					}},
+					Validation: false,
 				}
 				res := make([]blockResult, 0)
 				err := t.rpc.Call(&res, "eth_multicallV1", params, "latest")
@@ -1591,6 +1685,117 @@ var EthMulticall = MethodTests{
 				res := make([]blockResult, 0)
 				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
 					return err
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-override-storage-slots",
+			"override storage slots",
+			func(ctx context.Context, t *T) error {
+				stateChanges := make(map[common.Hash]common.Hash)
+				stateChanges[common.BytesToHash(*hex2Bytes("bc36789e7a1e281436464229828f817d6612f7b477d66591ff96a9e064bcc98a"))] = common.Hash{0x12} //slot 0 -> 0x12
+				params := multicallOpts{
+					Blocks: []CallBatch{
+						{
+							StateOverrides: &StateOverride{
+								common.Address{0xc0}: OverrideAccount{
+									Balance: newRPCBalance(2000),
+								},
+								common.Address{0xc1}: OverrideAccount{
+									Code: getStorageTester(),
+								},
+							},
+							Calls: []TransactionArgs{
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc1},
+									Input: hex2Bytes("7b8d56e300000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001"), // set storage slot 0 -> 1
+								},
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc1},
+									Input: hex2Bytes("7b8d56e300000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000002"), // set storage slot 1 -> 2
+								},
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc1},
+									Input: hex2Bytes("0ff4c9160000000000000000000000000000000000000000000000000000000000000000"), // gets storage slot 0, should be 1
+								},
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc1},
+									Input: hex2Bytes("0ff4c9160000000000000000000000000000000000000000000000000000000000000001"), // gets storage slot 1, should be 2
+								},
+							},
+						},
+						{
+							StateOverrides: &StateOverride{
+								common.Address{0xc1}: OverrideAccount{
+									StateDiff: &stateChanges, // state diff override
+								},
+							},
+							Calls: []TransactionArgs{
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc1},
+									Input: hex2Bytes("0ff4c9160000000000000000000000000000000000000000000000000000000000000000"), // gets storage slot 0, should be 0x12 as overrided
+								},
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc1},
+									Input: hex2Bytes("0ff4c9160000000000000000000000000000000000000000000000000000000000000001"), // gets storage slot 1, should be 2
+								},
+							},
+						},
+						{
+							StateOverrides: &StateOverride{
+								common.Address{0xc1}: OverrideAccount{
+									State: &stateChanges, // whole state override
+								},
+							},
+							Calls: []TransactionArgs{
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc1},
+									Input: hex2Bytes("0ff4c9160000000000000000000000000000000000000000000000000000000000000000"), // gets storage slot 0, should be 0x12 as overrided
+								},
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc1},
+									Input: hex2Bytes("0ff4c9160000000000000000000000000000000000000000000000000000000000000001"), // gets storage slot 1, should be 0 as the whole storage was replaced
+								},
+							},
+						},
+					},
+					TraceTransfers: true,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.Blocks) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.Blocks))
+				}
+				if res[0].Calls[2].ReturnValue.String() != "0x0000000000000000000000000000000000000000000000000000000000000001" {
+					return fmt.Errorf("unexpected call result (res[0].Calls[2]) (have: %s, want: %s)", res[0].Calls[2].ReturnValue.String(), "0x0000000000000000000000000000000000000000000000000000000000000001")
+				}
+				if res[0].Calls[3].ReturnValue.String() != "0x0000000000000000000000000000000000000000000000000000000000000002" {
+					return fmt.Errorf("unexpected call result (res[0].Calls[3]) (have: %s, want: %s)", res[0].Calls[3].ReturnValue.String(), "0x0000000000000000000000000000000000000000000000000000000000000002")
+				}
+
+				if res[1].Calls[0].ReturnValue.String() != "0x0000000000000000000000000000000000000000000000000000000000000012" {
+					return fmt.Errorf("unexpected call result (res[1].Calls[0]) (have: %s, want: %s)", res[0].Calls[3].ReturnValue.String(), "0x0000000000000000000000000000000000000000000000000000000000000012")
+				}
+				if res[1].Calls[1].ReturnValue.String() != "0x0000000000000000000000000000000000000000000000000000000000000002" {
+					return fmt.Errorf("unexpected call result (res[1].Calls[1]) (have: %s, want: %s)", res[0].Calls[1].ReturnValue.String(), "0x0000000000000000000000000000000000000000000000000000000000000002")
+				}
+
+				if res[2].Calls[0].ReturnValue.String() != "0x0000000000000000000000000000000000000000000000000000000000000012" {
+					return fmt.Errorf("unexpected call result (res[2].Calls[0]) (have: %s, want: %s)", res[2].Calls[0].ReturnValue.String(), "0x0000000000000000000000000000000000000000000000000000000000000012")
+				}
+				if res[2].Calls[1].ReturnValue.String() != "0x0000000000000000000000000000000000000000000000000000000000000000" {
+					return fmt.Errorf("unexpected call result (res[2].Calls[1]) (have: %s, want: %s)", res[2].Calls[1].ReturnValue.String(), "0x0000000000000000000000000000000000000000000000000000000000000000")
 				}
 				return nil
 			},
