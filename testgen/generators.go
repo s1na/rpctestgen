@@ -403,6 +403,150 @@ var EthMulticall = MethodTests{
 			},
 		},
 		{
+			"multicall-simple-no-funds",
+			"simulates a simple multicall transfer when account has no funds",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					Blocks: []CallBatch{
+						{
+							Calls: []TransactionArgs{{
+								From:  &common.Address{0xc0},
+								To:    &common.Address{0xc1},
+								Value: *newRPCBalance(1000),
+							}, {
+								From:  &common.Address{0xc1},
+								To:    &common.Address{0xc2},
+								Value: *newRPCBalance(1000),
+							}},
+						},
+					},
+					Validation: false,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.Blocks) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.Blocks))
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-simple-no-funds-with-validation",
+			"simulates a simple multicall transfer when account has no funds with validation",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					Blocks: []CallBatch{
+						{
+							Calls: []TransactionArgs{{
+								From:  &common.Address{0xc0},
+								To:    &common.Address{0xc1},
+								Value: *newRPCBalance(1000),
+							}, {
+								From:  &common.Address{0xc1},
+								To:    &common.Address{0xc2},
+								Value: *newRPCBalance(1000),
+							}},
+						},
+					},
+					Validation: true,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.Blocks) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.Blocks))
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-simple-send-from-contract",
+			"Sending eth from contract",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					Blocks: []CallBatch{{
+						StateOverrides: &StateOverride{
+							common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(1000), Code: getEthForwarder()},
+						},
+						Calls: []TransactionArgs{{
+							From:  &common.Address{0xc0},
+							To:    &common.Address{0xc1},
+							Value: *newRPCBalance(1000),
+						}},
+					}},
+					TraceTransfers: true,
+					Validation:     false,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.Blocks) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.Blocks))
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-simple-send-from-contract-no-balance",
+			"Sending eth from contract without balance",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					Blocks: []CallBatch{{
+						StateOverrides: &StateOverride{
+							common.Address{0xc0}: OverrideAccount{Code: getEthForwarder()},
+						},
+						Calls: []TransactionArgs{{
+							From:  &common.Address{0xc0},
+							To:    &common.Address{0xc1},
+							Value: *newRPCBalance(1000),
+						}},
+					}},
+					TraceTransfers: true,
+					Validation:     false,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.Blocks) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.Blocks))
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-simple-send-from-contract-with-validation",
+			"Sending eth from contract with validation enabled",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					Blocks: []CallBatch{{
+						StateOverrides: &StateOverride{
+							common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(1000), Code: getEthForwarder()},
+						},
+						Calls: []TransactionArgs{{
+							From:  &common.Address{0xc0},
+							To:    &common.Address{0xc1},
+							Value: *newRPCBalance(1000),
+						}},
+					}},
+					TraceTransfers: true,
+					Validation:     true,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.Blocks) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.Blocks))
+				}
+				return nil
+			},
+		},
+		{
 			"multicall-transfer-over-blocks",
 			"simulates a transfering value over multiple blocks",
 			func(ctx context.Context, t *T) error {
@@ -2144,6 +2288,7 @@ type StateOverride map[common.Address]OverrideAccount
 type multicallOpts struct {
 	Blocks         []CallBatch `json:"blocks,omitempty"`
 	TraceTransfers bool        `json:"traceTransfers,omitempty"`
+	Validation     bool        `json:"validation,omitempty"`
 }
 
 // CallBatch is a batch of calls to be simulated sequentially.
