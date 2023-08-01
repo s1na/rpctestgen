@@ -1717,6 +1717,59 @@ var EthMulticall = MethodTests{
 			},
 		},
 		{
+			"multicall-move-ecrecover-and_call",
+			"move ecrecover and try calling it",
+			func(ctx context.Context, t *T) error {
+				ecRecoverAddress := common.BytesToAddress(*hex2Bytes("0000000000000000000000000000000000000001"))
+				ecRecoverMovedToAddress := common.BytesToAddress(*hex2Bytes("0000000000000000000000000000000000123456"))
+				params := multicallOpts{
+					Blocks: []CallBatch{{
+						Calls: []TransactionArgs{ // just call ecrecover normally
+							{ // call with invalid params, should fail (resolve to 0x0)
+								From:  &common.Address{0xc1},
+								To:    &ecRecoverAddress,
+								Input: hex2Bytes("4554480000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007b45544800000000000000000000000000000000000000000000000000000000004554480000000000000000000000000000000000000000000000000000000000"),
+							},
+							{ // call with valid params, should resolve to 0xb11CaD98Ad3F8114E0b3A1F6E7228bc8424dF48a
+								From:  &common.Address{0xc1},
+								To:    &ecRecoverAddress,
+								Input: hex2Bytes("1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8000000000000000000000000000000000000000000000000000000000000001cb7cf302145348387b9e69fde82d8e634a0f8761e78da3bfa059efced97cbed0d2a66b69167cafe0ccfc726aec6ee393fea3cf0e4f3f9c394705e0f56d9bfe1c9"),
+							},
+						},
+					}, {
+						StateOverrides: &StateOverride{ // move ecRecover and call it in new address
+							ecRecoverAddress: OverrideAccount{
+								MoveToAddress: &ecRecoverMovedToAddress,
+							},
+						},
+						Calls: []TransactionArgs{
+							{ // call with invalid params, should fail (resolve to 0x0)
+								From:  &common.Address{0xc1},
+								To:    &ecRecoverMovedToAddress,
+								Input: hex2Bytes("4554480000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007b45544800000000000000000000000000000000000000000000000000000000004554480000000000000000000000000000000000000000000000000000000000"),
+							},
+							{ // call with valid params, should resolve to 0xb11CaD98Ad3F8114E0b3A1F6E7228bc8424dF48a
+								From:  &common.Address{0xc1},
+								To:    &ecRecoverMovedToAddress,
+								Input: hex2Bytes("1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8000000000000000000000000000000000000000000000000000000000000001cb7cf302145348387b9e69fde82d8e634a0f8761e78da3bfa059efced97cbed0d2a66b69167cafe0ccfc726aec6ee393fea3cf0e4f3f9c394705e0f56d9bfe1c9"),
+							},
+						},
+					}},
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.Blocks) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.Blocks))
+				}
+				if len(res[0].Calls) != len(params.Blocks[0].Calls) {
+					return fmt.Errorf("unexpected number of call results (have: %d, want: %d)", len(res[0].Calls), len(params.Blocks[0].Calls))
+				}
+				return nil
+			},
+		},
+		{
 			"multicall-override-ecrecover",
 			"override ecrecover",
 			func(ctx context.Context, t *T) error {
@@ -1730,18 +1783,17 @@ var EthMulticall = MethodTests{
 								MoveToAddress: &ecRecoverMovedToAddress,
 							},
 							common.Address{0xc1}: OverrideAccount{Balance: newRPCBalance(200000)},
-							common.Address{0xc2}: OverrideAccount{Code: getEcRecoverCaller()},
 						},
 						Calls: []TransactionArgs{
 							{ // call with invalid params, should fail (resolve to 0x0)
 								From:  &common.Address{0xc1},
-								To:    &common.Address{0xc2},
-								Input: hex2Bytes("265dc68c4554480000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007b45544800000000000000000000000000000000000000000000000000000000004554480000000000000000000000000000000000000000000000000000000000"),
+								To:    &ecRecoverMovedToAddress,
+								Input: hex2Bytes("4554480000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007b45544800000000000000000000000000000000000000000000000000000000004554480000000000000000000000000000000000000000000000000000000000"),
 							},
 							{ // call with valid params, should resolve to 0xb11CaD98Ad3F8114E0b3A1F6E7228bc8424dF48a
 								From:  &common.Address{0xc1},
-								To:    &common.Address{0xc2},
-								Input: hex2Bytes("265dc68c1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8000000000000000000000000000000000000000000000000000000000000001cb7cf302145348387b9e69fde82d8e634a0f8761e78da3bfa059efced97cbed0d2a66b69167cafe0ccfc726aec6ee393fea3cf0e4f3f9c394705e0f56d9bfe1c9"),
+								To:    &ecRecoverMovedToAddress,
+								Input: hex2Bytes("1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8000000000000000000000000000000000000000000000000000000000000001cb7cf302145348387b9e69fde82d8e634a0f8761e78da3bfa059efced97cbed0d2a66b69167cafe0ccfc726aec6ee393fea3cf0e4f3f9c394705e0f56d9bfe1c9"),
 							},
 							{ // add override
 								From:  &common.Address{0xc1},
@@ -1750,18 +1802,18 @@ var EthMulticall = MethodTests{
 							},
 							{ // now it should resolve to 0xd8dA6BF26964aF9D7eEd9e03E53415D37aA96045
 								From:  &common.Address{0xc1},
-								To:    &common.Address{0xc2},
-								Input: hex2Bytes("265dc68c4554480000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007b45544800000000000000000000000000000000000000000000000000000000004554480000000000000000000000000000000000000000000000000000000000"),
+								To:    &ecRecoverAddress,
+								Input: hex2Bytes("4554480000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007b45544800000000000000000000000000000000000000000000000000000000004554480000000000000000000000000000000000000000000000000000000000"),
 							},
 							{ // call with valid params, should resolve to 0xb11CaD98Ad3F8114E0b3A1F6E7228bc8424dF48a
 								From:  &common.Address{0xc1},
-								To:    &common.Address{0xc2},
-								Input: hex2Bytes("265dc68c1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8000000000000000000000000000000000000000000000000000000000000001cb7cf302145348387b9e69fde82d8e634a0f8761e78da3bfa059efced97cbed0d2a66b69167cafe0ccfc726aec6ee393fea3cf0e4f3f9c394705e0f56d9bfe1c9"),
+								To:    &ecRecoverAddress,
+								Input: hex2Bytes("1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8000000000000000000000000000000000000000000000000000000000000001cb7cf302145348387b9e69fde82d8e634a0f8761e78da3bfa059efced97cbed0d2a66b69167cafe0ccfc726aec6ee393fea3cf0e4f3f9c394705e0f56d9bfe1c9"),
 							},
 							{ // call with new invalid params, should fail (resolve to 0x0)
 								From:  &common.Address{0xc1},
-								To:    &common.Address{0xc2},
-								Input: hex2Bytes("265dc68c4554480000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007b45544800000000000000000000000000000000000000000000000000000000004554490000000000000000000000000000000000000000000000000000000000"),
+								To:    &ecRecoverAddress,
+								Input: hex2Bytes("4554480000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007b45544800000000000000000000000000000000000000000000000000000000004554490000000000000000000000000000000000000000000000000000000000"),
 							},
 						},
 					}},
@@ -1916,10 +1968,10 @@ var EthMulticall = MethodTests{
 				}
 
 				if res[1].Calls[0].ReturnValue.String() != "0x1200000000000000000000000000000000000000000000000000000000000000" {
-					return fmt.Errorf("unexpected call result (res[1].Calls[0]) (have: %s, want: %s)", res[0].Calls[3].ReturnValue.String(), "0x1200000000000000000000000000000000000000000000000000000000000000")
+					return fmt.Errorf("unexpected call result (res[1].Calls[0]) (have: %s, want: %s)", res[1].Calls[0].ReturnValue.String(), "0x1200000000000000000000000000000000000000000000000000000000000000")
 				}
 				if res[1].Calls[1].ReturnValue.String() != "0x0000000000000000000000000000000000000000000000000000000000000002" {
-					return fmt.Errorf("unexpected call result (res[1].Calls[1]) (have: %s, want: %s)", res[0].Calls[1].ReturnValue.String(), "0x0000000000000000000000000000000000000000000000000000000000000002")
+					return fmt.Errorf("unexpected call result (res[1].Calls[1]) (have: %s, want: %s)", res[1].Calls[1].ReturnValue.String(), "0x0000000000000000000000000000000000000000000000000000000000000002")
 				}
 
 				if res[2].Calls[0].ReturnValue.String() != "0x1200000000000000000000000000000000000000000000000000000000000000" {
