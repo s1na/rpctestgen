@@ -2481,6 +2481,60 @@ var EthMulticall = MethodTests{
 				return nil
 			},
 		},
+		{
+			"multicall-fee-recipient-receiving-funds",
+			"Check that fee recipient gets funds",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					Blocks: []CallBatch{
+						{
+							StateOverrides: &StateOverride{
+								common.Address{0xc0}: OverrideAccount{
+									Balance: newRPCBalance(2000000),
+								},
+								common.Address{0xc1}: OverrideAccount{
+									Code: getBalanceGetter(),
+								},
+							},
+							BlockOverrides: &BlockOverrides{
+								Number:       (*hexutil.Big)(big.NewInt(10)),
+								FeeRecipient: &common.Address{0xc2},
+								BaseFee:      (*hexutil.Big)(big.NewInt(10)),
+							},
+							Calls: []TransactionArgs{
+								{
+									From:                 &common.Address{0xc0},
+									To:                   &common.Address{0xc1},
+									MaxFeePerGas:         (*hexutil.Big)(big.NewInt(10)),
+									MaxPriorityFeePerGas: (*hexutil.Big)(big.NewInt(10)),
+									Input:                hex2Bytes(""),
+								},
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc1},
+									Input: hex2Bytes("0xf8b2cb4f000000000000000000000000c000000000000000000000000000000000000000"), // gets balance of c0
+								},
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc1},
+									Input: hex2Bytes("0xf8b2cb4f000000000000000000000000c200000000000000000000000000000000000000"), // gets balance of c2
+								},
+							},
+						},
+					},
+					Validation:     true,
+					TraceTransfers: true,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.Blocks) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.Blocks))
+				}
+				return nil
+			},
+		},
 	},
 }
 
