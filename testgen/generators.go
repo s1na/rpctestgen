@@ -1742,6 +1742,90 @@ var EthMulticall = MethodTests{
 			},
 		},
 		{
+			"multicall-check-that-nonce-increases",
+			"check that nonce increases",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					Blocks: []CallBatch{
+						{
+							StateOverrides: &StateOverride{
+								common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(20000)},
+							},
+						}, {
+							Calls: []TransactionArgs{
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc0},
+									Nonce: getUint64Ptr(0),
+								},
+								{
+									From:  &common.Address{0xc1},
+									To:    &common.Address{0xc1},
+									Nonce: getUint64Ptr(1),
+								},
+								{
+									From:  &common.Address{0xc1},
+									To:    &common.Address{0xc1},
+									Nonce: getUint64Ptr(2),
+								},
+							},
+						},
+					},
+					Validation: true,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.Blocks) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.Blocks))
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-check-invalid-nonce",
+			"check that nonce cannot decrease",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					Blocks: []CallBatch{
+						{
+							StateOverrides: &StateOverride{
+								common.Address{0xc0}: OverrideAccount{Balance: newRPCBalance(20000)},
+							},
+						}, {
+							Calls: []TransactionArgs{
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc0},
+									Nonce: getUint64Ptr(0),
+								},
+								{
+									From:  &common.Address{0xc1},
+									To:    &common.Address{0xc1},
+									Nonce: getUint64Ptr(1),
+								},
+								{
+									From:  &common.Address{0xc1},
+									To:    &common.Address{0xc1},
+									Nonce: getUint64Ptr(0),
+								},
+							},
+						},
+					},
+					Validation: true,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.Blocks) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.Blocks))
+				}
+				return nil
+			},
+		},
+		{
 			"multicall-move-to-address-with-nonce",
 			"check that nonce is moved with address",
 			func(ctx context.Context, t *T) error {
@@ -2460,6 +2544,80 @@ var EthMulticall = MethodTests{
 								FeeRecipient: &common.Address{0xc2},
 								PrevRandao:   &prevRandDao3,
 								BaseFee:      (*hexutil.Big)(big.NewInt(30)),
+							},
+							Calls: []TransactionArgs{
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc1},
+									Input: hex2Bytes(""),
+								},
+							},
+						},
+					},
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.Blocks) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.Blocks))
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-add-more-non-defined-blocks-than-fit",
+			"Add more blocks between two blocks than it actually fits there",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					Blocks: []CallBatch{
+						{
+							StateOverrides: &StateOverride{
+								common.Address{0xc1}: OverrideAccount{
+									Code: getBlockProperties(),
+								},
+							},
+							BlockOverrides: &BlockOverrides{
+								Number: (*hexutil.Big)(big.NewInt(10)),
+							},
+							Calls: []TransactionArgs{
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc1},
+									Input: hex2Bytes(""),
+								},
+							},
+						},
+						{
+							Calls: []TransactionArgs{
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc1},
+									Input: hex2Bytes(""),
+								},
+							},
+						},
+						{
+							Calls: []TransactionArgs{
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc1},
+									Input: hex2Bytes(""),
+								},
+							},
+						},
+						{
+							Calls: []TransactionArgs{
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc1},
+									Input: hex2Bytes(""),
+								},
+							},
+						},
+						{
+							BlockOverrides: &BlockOverrides{
+								Number: (*hexutil.Big)(big.NewInt(11)),
 							},
 							Calls: []TransactionArgs{
 								{
