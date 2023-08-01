@@ -1294,7 +1294,7 @@ type StateOverride map[common.Address]OverrideAccount
 
 // multicallOpts is the wrapper for multicall parameters.
 type multicallOpts struct {
-	Blocks         []CallBatch `json:"blocks,omitempty"`
+	Blocks         []CallBatch `json:"blockStateCalls,omitempty"`
 	TraceTransfers bool        `json:"traceTransfers,omitempty"`
 }
 
