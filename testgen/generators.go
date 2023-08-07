@@ -807,7 +807,7 @@ var EthMulticall = MethodTests{
 		},
 		{
 			"multicall-block-timestamp-order",
-			"Error: simulates calls with invalid timestamp num order",
+			"Error: simulates calls with invalid timestamp order",
 			func(ctx context.Context, t *T) error {
 				params := multicallOpts{
 					BlockStateCalls: []CallBatch{
@@ -831,6 +831,67 @@ var EthMulticall = MethodTests{
 					return err
 				}
 				return err
+			},
+		},
+		{
+			"multicall-block-timestamp-non-incement",
+			"Error: simulates calls with timestamp staying the same",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{
+						{
+							BlockOverrides: &BlockOverrides{
+								Time: getUint64Ptr(12),
+							},
+						}, {
+							BlockOverrides: &BlockOverrides{
+								Time: getUint64Ptr(12),
+							},
+						},
+					},
+				}
+				res := make([]interface{}, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.BlockStateCalls) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-block-timestamp-non-incement",
+			"Error: simulates calls with timestamp incrementing over another",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{
+						{
+							BlockOverrides: &BlockOverrides{
+								Time: getUint64Ptr(11),
+							},
+						},
+						{
+							BlockOverrides: &BlockOverrides{},
+						},
+						{
+							BlockOverrides: &BlockOverrides{
+								Time: getUint64Ptr(12),
+							},
+						},
+						{
+							BlockOverrides: &BlockOverrides{},
+						},
+					},
+				}
+				res := make([]interface{}, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.BlockStateCalls) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
+				}
+				return nil
 			},
 		},
 		{
@@ -2598,6 +2659,44 @@ var EthMulticall = MethodTests{
 							},
 						},
 						{
+							BlockOverrides: &BlockOverrides{
+								Number: (*hexutil.Big)(big.NewInt(11)),
+							},
+							Calls: []TransactionArgs{
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc1},
+									Input: hex2Bytes(""),
+								},
+							},
+						},
+					},
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.BlockStateCalls) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-add-more-non-defined-BlockStateCalls-than-fit",
+			"Not all block numbers are defined",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{
+						{
+							StateOverrides: &StateOverride{
+								common.Address{0xc1}: OverrideAccount{
+									Code: getBlockProperties(),
+								},
+							},
+							BlockOverrides: &BlockOverrides{
+								Number: (*hexutil.Big)(big.NewInt(10)),
+							},
 							Calls: []TransactionArgs{
 								{
 									From:  &common.Address{0xc0},
@@ -2617,8 +2716,17 @@ var EthMulticall = MethodTests{
 						},
 						{
 							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(11)),
+								Number: (*hexutil.Big)(big.NewInt(20)),
 							},
+							Calls: []TransactionArgs{
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc1},
+									Input: hex2Bytes(""),
+								},
+							},
+						},
+						{
 							Calls: []TransactionArgs{
 								{
 									From:  &common.Address{0xc0},
