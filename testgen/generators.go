@@ -765,8 +765,8 @@ var EthMulticall = MethodTests{
 			},
 		},
 		{
-			"multicall-block-num-order",
-			"simulates calls with invalid block num order",
+			"multicall-block-num-order-38020",
+			"simulates calls with invalid block num order (-38020)",
 			func(ctx context.Context, t *T) error {
 				params := multicallOpts{
 					BlockStateCalls: []CallBatch{{
@@ -806,8 +806,8 @@ var EthMulticall = MethodTests{
 			},
 		},
 		{
-			"multicall-block-timestamp-order",
-			"Error: simulates calls with invalid timestamp order",
+			"multicall-block-timestamp-order-38021",
+			"Error: simulates calls with invalid timestamp order (-38021)",
 			func(ctx context.Context, t *T) error {
 				params := multicallOpts{
 					BlockStateCalls: []CallBatch{
@@ -823,14 +823,13 @@ var EthMulticall = MethodTests{
 					},
 				}
 				res := make([]blockResult, 0)
-				err := t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
 				if len(res) != len(params.BlockStateCalls) {
 					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
 				}
-				if err := checkError(err, -38021); err != nil {
-					return err
-				}
-				return err
+				return nil
 			},
 		},
 		{
@@ -1223,8 +1222,8 @@ var EthMulticall = MethodTests{
 			},
 		},
 		{
-			"multicall-run-out-of-gas-in-block",
-			"we should get out of gas error if a block consumes too much gas",
+			"multicall-run-out-of-gas-in-block-38015",
+			"we should get out of gas error if a block consumes too much gas (-38015)",
 			func(ctx context.Context, t *T) error {
 				params := multicallOpts{
 					BlockStateCalls: []CallBatch{{
@@ -1321,6 +1320,30 @@ var EthMulticall = MethodTests{
 			"multicall without parameters",
 			func(ctx context.Context, t *T) error {
 				params := multicallOpts{}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-empty-calls-and-overrides-multicall",
+			"multicall with state overrides and calls but they are empty",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{
+						{
+							StateOverrides: &StateOverride{},
+							Calls:          []TransactionArgs{{}},
+						},
+						{
+							StateOverrides: &StateOverride{},
+							Calls:          []TransactionArgs{{}},
+						},
+					},
+					TraceTransfers: true,
+				}
 				res := make([]blockResult, 0)
 				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
 					return err
@@ -1490,8 +1513,8 @@ var EthMulticall = MethodTests{
 			},
 		},
 		{
-			"multicall-transaction-too-low-nonce",
-			"Error: Nonce too low",
+			"multicall-transaction-too-low-nonce-38010",
+			"Error: Nonce too low (-38010)",
 			func(ctx context.Context, t *T) error {
 				params := multicallOpts{
 					BlockStateCalls: []CallBatch{{
@@ -1506,14 +1529,13 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				err := t.rpc.Call(&res, "eth_multicallV1", params, "latest")
-				if err := checkError(err, -38010); err != nil {
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
 					return err
 				}
-				if err := checkStatus(res[0].Calls[0].Status, 0x2); err != nil {
-					return err
+				if len(res) != len(params.BlockStateCalls) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
 				}
-				return err
+				return nil
 			},
 		},
 		{
@@ -1530,22 +1552,18 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				err := t.rpc.Call(&res, "eth_multicallV1", params, "latest")
-				if err := checkError(err, -38011); err != nil {
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params.BlockStateCalls) {
 					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
 				}
-				if err := checkStatus(res[0].Calls[0].Status, 0x2); err != nil {
-					return err
-				}
-				return err
+				return nil
 			},
 		},
 		{
-			"multicall-basefee-too-low-with-validation",
-			"Error: BaseFee too low with validation",
+			"multicall-basefee-too-low-with-validation-38012",
+			"Error: BaseFee too low with validation (-38012)",
 			func(ctx context.Context, t *T) error {
 				params := multicallOpts{
 					BlockStateCalls: []CallBatch{{
@@ -1565,19 +1583,18 @@ var EthMulticall = MethodTests{
 					Validation: true,
 				}
 				res := make([]blockResult, 0)
-				err := t.rpc.Call(&res, "eth_multicallV1", params, "latest")
-				if err := checkError(err, -38012); err != nil {
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
 					return err
 				}
-				if err := checkStatus(res[0].Calls[0].Status, 0x2); err != nil {
-					return err
+				if len(res) != len(params.BlockStateCalls) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
 				}
-				return err
+				return nil
 			},
 		},
 		{
-			"multicall-basefee-too-low-without-validation",
-			"Error: BaseFee too low with no validation",
+			"multicall-basefee-too-low-without-validation-38012",
+			"Error: BaseFee too low with no validation (-38012)",
 			func(ctx context.Context, t *T) error {
 				params := multicallOpts{
 					BlockStateCalls: []CallBatch{{
@@ -1597,19 +1614,18 @@ var EthMulticall = MethodTests{
 					Validation: false,
 				}
 				res := make([]blockResult, 0)
-				err := t.rpc.Call(&res, "eth_multicallV1", params, "latest")
-				if err := checkError(err, -38012); err != nil {
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
 					return err
 				}
-				if err := checkStatus(res[0].Calls[0].Status, 0x2); err != nil {
-					return err
+				if len(res) != len(params.BlockStateCalls) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
 				}
-				return err
+				return nil
 			},
 		},
 		{
-			"multicall-instrict-gas",
-			"Error: Not enough gas provided to pay for intrinsic gas",
+			"multicall-instrict-gas-38013",
+			"Error: Not enough gas provided to pay for intrinsic gas (-38013)",
 			func(ctx context.Context, t *T) error {
 				params := multicallOpts{
 					BlockStateCalls: []CallBatch{{
@@ -1621,19 +1637,18 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				err := t.rpc.Call(&res, "eth_multicallV1", params, "latest")
-				if err := checkError(err, -38013); err != nil {
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
 					return err
 				}
-				if err := checkStatus(res[0].Calls[0].Status, 0x2); err != nil {
-					return err
+				if len(res) != len(params.BlockStateCalls) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
 				}
-				return err
+				return nil
 			},
 		},
 		{
-			"multicall-gas-fees-and-value-error",
-			"Error: Insufficient funds to pay for gas fees and value",
+			"multicall-gas-fees-and-value-error-38014",
+			"Error: Insufficient funds to pay for gas fees and value (-38014)",
 			func(ctx context.Context, t *T) error {
 				params := multicallOpts{
 					BlockStateCalls: []CallBatch{{
@@ -1645,16 +1660,42 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				err := t.rpc.Call(&res, "eth_multicallV1", params, "latest")
-				if err := checkError(err, -38014); err != nil {
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
 					return err
 				}
-				return err
+				if len(res) != len(params.BlockStateCalls) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
+				}
+				return nil
 			},
 		},
 		{
-			"multicall-move-to-address-itself-reference",
-			"Error: MoveToAddress referenced itself in replacement",
+			"multicall-gas-fees-and-value-error-38014-with-validation",
+			"Error: Insufficient funds to pay for gas fees and value (-38014) with validation",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{{
+						Calls: []TransactionArgs{{
+							From:  &common.Address{0xc0},
+							To:    &common.Address{0xc1},
+							Value: (*hexutil.Big)(big.NewInt(1000)),
+						}},
+					}},
+					Validation: true,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.BlockStateCalls) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-move-to-address-itself-reference-38022",
+			"Error: MoveToAddress referenced itself in replacement (-38022)",
 			func(ctx context.Context, t *T) error {
 				params := multicallOpts{
 					BlockStateCalls: []CallBatch{{
@@ -1670,11 +1711,13 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				err := t.rpc.Call(&res, "eth_multicallV1", params, "latest")
-				if err := checkError(err, -38022); err != nil {
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
 					return err
 				}
-				return err
+				if len(res) != len(params.BlockStateCalls) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
+				}
+				return nil
 			},
 		},
 		{
@@ -1738,8 +1781,8 @@ var EthMulticall = MethodTests{
 			},
 		},
 		{
-			"multicall-move-to-accounts-to-same",
-			"Move two accounts to the same destination",
+			"multicall-move-to-accounts-to-same-38023",
+			"Move two accounts to the same destination (-38023)",
 			func(ctx context.Context, t *T) error {
 				params := multicallOpts{
 					BlockStateCalls: []CallBatch{{
@@ -1755,11 +1798,13 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				err := t.rpc.Call(&res, "eth_multicallV1", params, "latest")
-				if err := checkError(err, -38023); err != nil {
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
 					return err
 				}
-				return err
+				if len(res) != len(params.BlockStateCalls) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
+				}
+				return nil
 			},
 		},
 		{
@@ -2160,6 +2205,65 @@ var EthMulticall = MethodTests{
 							},
 							{
 								From:  &common.Address{0xc0},
+								To:    &sha256Address,
+								Input: hex2Bytes("1234"),
+							},
+						},
+					}},
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-override-identity",
+			"override identity precompile",
+			func(ctx context.Context, t *T) error {
+				identityAddress := common.BytesToAddress(*hex2Bytes("0000000000000000000000000000000000000004"))
+				identityMovedToAddress := common.BytesToAddress(*hex2Bytes("0000000000000000000000000000000000123456"))
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{{
+						StateOverrides: &StateOverride{
+							identityAddress: OverrideAccount{
+								Code:          hex2Bytes(""),
+								MoveToAddress: &identityMovedToAddress,
+							},
+						},
+						Calls: []TransactionArgs{
+							{
+								From:  &common.Address{0xc0},
+								To:    &identityMovedToAddress,
+								Input: hex2Bytes("1234"),
+							},
+							{
+								From:  &common.Address{0xc0},
+								To:    &identityAddress,
+								Input: hex2Bytes("1234"),
+							},
+						},
+					}},
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-precompile-is-sending-transaction",
+			"send transaction from a precompile",
+			func(ctx context.Context, t *T) error {
+				identityAddress := common.BytesToAddress(*hex2Bytes("0000000000000000000000000000000000000004"))
+				sha256Address := common.BytesToAddress(*hex2Bytes("0000000000000000000000000000000000000002"))
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{{
+						Calls: []TransactionArgs{
+							{
+								From:  &identityAddress,
 								To:    &sha256Address,
 								Input: hex2Bytes("1234"),
 							},
