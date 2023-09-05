@@ -845,7 +845,29 @@ var EthMulticall = MethodTests{
 			},
 		},
 		{
-			"multicall-block-timestamp-non-incement",
+			"multicall-block-timestamps-incrementing",
+			"checks that you can set timestamp and increment it in next block",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{
+						{
+							BlockOverrides: &BlockOverrides{
+								Time: getUint64Ptr(11),
+							},
+						}, {
+							BlockOverrides: &BlockOverrides{
+								Time: getUint64Ptr(12),
+							},
+						},
+					},
+				}
+				res := make([]blockResult, 0)
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				return nil
+			},
+		},
+		{
+			"multicall-block-timestamp-auto-increment",
 			"Error: simulates calls with timestamp incrementing over another",
 			func(ctx context.Context, t *T) error {
 				params := multicallOpts{
@@ -868,13 +890,8 @@ var EthMulticall = MethodTests{
 						},
 					},
 				}
-				res := make([]interface{}, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
-					return err
-				}
-				if len(res) != len(params.BlockStateCalls) {
-					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
-				}
+				res := make([]blockResult, 0)
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
 				return nil
 			},
 		},
@@ -974,7 +991,7 @@ var EthMulticall = MethodTests{
 				if len(res) != len(params.BlockStateCalls) {
 					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
 				}
-				if err := checkBlockNumber(res[0].Number, 3); err != nil {
+				if err := checkBlockNumber(res[0].Number, 4); err != nil {
 					return err
 				}
 				if len(res[0].Calls) != 1 {
