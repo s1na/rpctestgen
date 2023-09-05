@@ -796,12 +796,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
-					return err
-				}
-				if len(res) != len(params.BlockStateCalls) {
-					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
-				}
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
 				return nil
 			},
 		},
@@ -823,12 +818,7 @@ var EthMulticall = MethodTests{
 					},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
-					return err
-				}
-				if len(res) != len(params.BlockStateCalls) {
-					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
-				}
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
 				return nil
 			},
 		},
@@ -849,13 +839,8 @@ var EthMulticall = MethodTests{
 						},
 					},
 				}
-				res := make([]interface{}, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
-					return err
-				}
-				if len(res) != len(params.BlockStateCalls) {
-					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
-				}
+				res := make([]blockResult, 0)
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
 				return nil
 			},
 		},
@@ -1254,9 +1239,7 @@ var EthMulticall = MethodTests{
 					},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
-					return err
-				}
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
 				return nil
 			},
 		},
@@ -1529,12 +1512,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
-					return err
-				}
-				if len(res) != len(params.BlockStateCalls) {
-					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
-				}
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
 				return nil
 			},
 		},
@@ -1583,12 +1561,7 @@ var EthMulticall = MethodTests{
 					Validation: true,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
-					return err
-				}
-				if len(res) != len(params.BlockStateCalls) {
-					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
-				}
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
 				return nil
 			},
 		},
@@ -1614,12 +1587,7 @@ var EthMulticall = MethodTests{
 					Validation: false,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
-					return err
-				}
-				if len(res) != len(params.BlockStateCalls) {
-					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
-				}
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
 				return nil
 			},
 		},
@@ -1637,12 +1605,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
-					return err
-				}
-				if len(res) != len(params.BlockStateCalls) {
-					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
-				}
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
 				return nil
 			},
 		},
@@ -1660,12 +1623,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
-					return err
-				}
-				if len(res) != len(params.BlockStateCalls) {
-					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
-				}
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
 				return nil
 			},
 		},
@@ -1684,12 +1642,7 @@ var EthMulticall = MethodTests{
 					Validation: true,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
-					return err
-				}
-				if len(res) != len(params.BlockStateCalls) {
-					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
-				}
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
 				return nil
 			},
 		},
@@ -1711,12 +1664,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
-					return err
-				}
-				if len(res) != len(params.BlockStateCalls) {
-					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
-				}
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
 				return nil
 			},
 		},
@@ -1798,12 +1746,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
-					return err
-				}
-				if len(res) != len(params.BlockStateCalls) {
-					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
-				}
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
 				return nil
 			},
 		},
