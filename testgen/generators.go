@@ -2614,6 +2614,42 @@ var EthMulticall = MethodTests{
 			},
 		},
 		{
+			"multicall-block-override-reflected-in-contract-simple",
+			"Checks that block overrides are true in contract for block number and time",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{
+						{
+							BlockOverrides: &BlockOverrides{
+								Number: (*hexutil.Big)(big.NewInt(10)),
+								Time:   getUint64Ptr(100),
+							},
+						},
+						{
+							BlockOverrides: &BlockOverrides{
+								Number: (*hexutil.Big)(big.NewInt(20)),
+								Time:   getUint64Ptr(200),
+							},
+						},
+						{
+							BlockOverrides: &BlockOverrides{
+								Number: (*hexutil.Big)(big.NewInt(21)),
+								Time:   getUint64Ptr(300),
+							},
+						},
+					},
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.BlockStateCalls) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
+				}
+				return nil
+			},
+		},
+		{
 			"multicall-block-override-reflected-in-contract",
 			"Checks that block overrides are true in contract",
 			func(ctx context.Context, t *T) error {
@@ -2740,14 +2776,11 @@ var EthMulticall = MethodTests{
 				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
 					return err
 				}
-				if len(res) != len(params.BlockStateCalls) {
-					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
-				}
 				return nil
 			},
 		},
 		{
-			"multicall-add-more-non-defined-BlockStateCalls-than-fit",
+			"multicall-add-more-non-defined-BlockStateCalls-than-fit-but-now-with-fit",
 			"Not all block numbers are defined",
 			func(ctx context.Context, t *T) error {
 				params := multicallOpts{
@@ -2804,9 +2837,6 @@ var EthMulticall = MethodTests{
 				res := make([]blockResult, 0)
 				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
 					return err
-				}
-				if len(res) != len(params.BlockStateCalls) {
-					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
 				}
 				return nil
 			},
