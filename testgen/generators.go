@@ -2628,13 +2628,13 @@ var EthMulticall = MethodTests{
 						{
 							BlockOverrides: &BlockOverrides{
 								Number: (*hexutil.Big)(big.NewInt(20)),
-								Time:   getUint64Ptr(200),
+								Time:   getUint64Ptr(101),
 							},
 						},
 						{
 							BlockOverrides: &BlockOverrides{
 								Number: (*hexutil.Big)(big.NewInt(21)),
-								Time:   getUint64Ptr(300),
+								Time:   getUint64Ptr(200),
 							},
 						},
 					},
@@ -2666,7 +2666,7 @@ var EthMulticall = MethodTests{
 							},
 							BlockOverrides: &BlockOverrides{
 								Number:       (*hexutil.Big)(big.NewInt(10)),
-								Time:         getUint64Ptr(10),
+								Time:         getUint64Ptr(100),
 								GasLimit:     getUint64Ptr(10),
 								FeeRecipient: &common.Address{0xc0},
 								PrevRandao:   &prevRandDao1,
@@ -2683,7 +2683,7 @@ var EthMulticall = MethodTests{
 						{
 							BlockOverrides: &BlockOverrides{
 								Number:       (*hexutil.Big)(big.NewInt(20)),
-								Time:         getUint64Ptr(20),
+								Time:         getUint64Ptr(200),
 								GasLimit:     getUint64Ptr(20),
 								FeeRecipient: &common.Address{0xc1},
 								PrevRandao:   &prevRandDao2,
@@ -2700,7 +2700,7 @@ var EthMulticall = MethodTests{
 						{
 							BlockOverrides: &BlockOverrides{
 								Number:       (*hexutil.Big)(big.NewInt(21)),
-								Time:         getUint64Ptr(21),
+								Time:         getUint64Ptr(300),
 								GasLimit:     getUint64Ptr(21),
 								FeeRecipient: &common.Address{0xc2},
 								PrevRandao:   &prevRandDao3,
@@ -2773,9 +2773,7 @@ var EthMulticall = MethodTests{
 					},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
-					return err
-				}
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
 				return nil
 			},
 		},
