@@ -1432,7 +1432,7 @@ var EthMulticall = MethodTests{
 							From:  &common.Address{0xc0},
 							To:    &common.Address{0xc1},
 							Value: *newRPCBalance(1000),
-							Input: hex2Bytes("4b64e4920000000000000000000000000000000000000000000000000000000000000001"),
+							Input: hex2Bytes("4b64e4920000000000000000000000000000000000000000000000000000000000000100"),
 						}},
 					}},
 					TraceTransfers: true,
@@ -1946,7 +1946,7 @@ var EthMulticall = MethodTests{
 								From:  &common.Address{0xc0},
 								To:    &common.Address{0xc1},
 								Value: *newRPCBalance(1000),
-								Input: hex2Bytes("4b64e4920000000000000000000000000000000000000000000000000000000000000001"),
+								Input: hex2Bytes("4b64e4920000000000000000000000000000000000000000000000000000000000000100"),
 							}},
 						},
 					},
@@ -2006,8 +2006,8 @@ var EthMulticall = MethodTests{
 				if *res[0].PrevRandao != *randDao {
 					return fmt.Errorf("unexpected PrevRandao (have: %d, want: %d)", res[0].PrevRandao, randDao)
 				}
-				if res[0].BaseFeePerGas.ToInt() != baseFee.ToInt() {
-					return fmt.Errorf("unexpected BaseFeePerGas (have: %d, want: %d)", res[0].BaseFeePerGas.ToInt(), 1007)
+				if res[0].BaseFeePerGas.ToInt() != big.NewInt(1007) {
+					return fmt.Errorf("unexpected BaseFeePerGas (have: %d, want: %d)", res[0].BaseFeePerGas.ToInt(), big.NewInt(1007))
 				}
 				return nil
 			},
