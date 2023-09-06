@@ -2006,7 +2006,7 @@ var EthMulticall = MethodTests{
 				if *res[0].PrevRandao != *randDao {
 					return fmt.Errorf("unexpected PrevRandao (have: %d, want: %d)", res[0].PrevRandao, randDao)
 				}
-				if res[0].BaseFeePerGas.ToInt() != big.NewInt(1007) {
+				if res[0].BaseFeePerGas.ToInt().Cmp(baseFee.ToInt()) == 0 {
 					return fmt.Errorf("unexpected BaseFeePerGas (have: %d, want: %d)", res[0].BaseFeePerGas.ToInt(), big.NewInt(1007))
 				}
 				return nil
