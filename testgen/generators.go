@@ -1465,7 +1465,7 @@ var EthMulticall = MethodTests{
 							From:  &common.Address{0xc0},
 							To:    &common.Address{0xc1},
 							Value: *newRPCBalance(1000),
-							Input: hex2Bytes("4b64e49200000000000000000000000000000000000000000000000000000000000000c2"), //foward(0xc2)
+							Input: hex2Bytes("4b64e492c200000000000000000000000000000000000000000000000000000000000000"), //foward(0xc2)
 						}},
 					}},
 					TraceTransfers: true,
@@ -1971,6 +1971,7 @@ var EthMulticall = MethodTests{
 			func(ctx context.Context, t *T) error {
 				feeRecipient := common.Address{0xc2}
 				randDao := &common.Hash{0xc3}
+				baseFee := (*hexutil.Big)(big.NewInt(1007))
 				params := multicallOpts{
 					BlockStateCalls: []CallBatch{{
 						BlockOverrides: &BlockOverrides{
@@ -1979,7 +1980,7 @@ var EthMulticall = MethodTests{
 							GasLimit:     getUint64Ptr(1004),
 							FeeRecipient: &feeRecipient,
 							PrevRandao:   randDao,
-							BaseFee:      (*hexutil.Big)(big.NewInt(1007)),
+							BaseFee:      baseFee,
 						},
 					}},
 				}
@@ -2005,7 +2006,7 @@ var EthMulticall = MethodTests{
 				if *res[0].PrevRandao != *randDao {
 					return fmt.Errorf("unexpected PrevRandao (have: %d, want: %d)", res[0].PrevRandao, randDao)
 				}
-				if res[0].BaseFeePerGas != (*hexutil.Big)(big.NewInt(1007)) {
+				if res[0].BaseFeePerGas.ToInt() != baseFee.ToInt() {
 					return fmt.Errorf("unexpected BaseFeePerGas (have: %d, want: %d)", res[0].BaseFeePerGas.ToInt(), 1007)
 				}
 				return nil
