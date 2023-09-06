@@ -1944,7 +1944,7 @@ var EthMulticall = MethodTests{
 							},
 							Calls: []TransactionArgs{{
 								From:  &common.Address{0xc0},
-								To:    &common.Address{0xc2},
+								To:    &common.Address{0xc1},
 								Value: *newRPCBalance(1000),
 								Input: hex2Bytes("4b64e4920000000000000000000000000000000000000000000000000000000000000001"),
 							}},
@@ -2002,7 +2002,7 @@ var EthMulticall = MethodTests{
 				if res[0].FeeRecipient != feeRecipient {
 					return fmt.Errorf("unexpected FeeRecipient (have: %d, want: %d)", res[0].FeeRecipient, feeRecipient)
 				}
-				if res[0].PrevRandao != randDao {
+				if *res[0].PrevRandao != *randDao {
 					return fmt.Errorf("unexpected PrevRandao (have: %d, want: %d)", res[0].PrevRandao, randDao)
 				}
 				if res[0].BaseFeePerGas != (*hexutil.Big)(big.NewInt(1007)) {
