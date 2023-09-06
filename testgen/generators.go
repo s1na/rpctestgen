@@ -447,12 +447,12 @@ var EthMulticall = MethodTests{
 							{
 								From:  &common.Address{0xc0},
 								To:    &common.Address{0xc2},
-								Input: hex2Bytes("0xf8b2cb4f000000000000000000000000c000000000000000000000000000000000000000"), // gets balance of c0
+								Input: hex2Bytes("f8b2cb4f000000000000000000000000c000000000000000000000000000000000000000"), // gets balance of c0
 							},
 							{
 								From:  &common.Address{0xc0},
 								To:    &common.Address{0xc2},
-								Input: hex2Bytes("0xf8b2cb4f000000000000000000000000c100000000000000000000000000000000000000"), // gets balance of c1
+								Input: hex2Bytes("f8b2cb4f000000000000000000000000c100000000000000000000000000000000000000"), // gets balance of c1
 							},
 							{
 								From:  &common.Address{0xc0},
@@ -462,12 +462,12 @@ var EthMulticall = MethodTests{
 							{
 								From:  &common.Address{0xc0},
 								To:    &common.Address{0xc2},
-								Input: hex2Bytes("0xf8b2cb4f000000000000000000000000c000000000000000000000000000000000000000"), // gets balance of c0
+								Input: hex2Bytes("f8b2cb4f000000000000000000000000c000000000000000000000000000000000000000"), // gets balance of c0
 							},
 							{
 								From:  &common.Address{0xc0},
 								To:    &common.Address{0xc2},
-								Input: hex2Bytes("0xf8b2cb4f000000000000000000000000c100000000000000000000000000000000000000"), // gets balance of c1
+								Input: hex2Bytes("f8b2cb4f000000000000000000000000c100000000000000000000000000000000000000"), // gets balance of c1
 							},
 							{
 								From:  &common.Address{0xc0},
@@ -477,12 +477,12 @@ var EthMulticall = MethodTests{
 							{
 								From:  &common.Address{0xc0},
 								To:    &common.Address{0xc2},
-								Input: hex2Bytes("0xf8b2cb4f000000000000000000000000c000000000000000000000000000000000000000"), // gets balance of c0
+								Input: hex2Bytes("f8b2cb4f000000000000000000000000c000000000000000000000000000000000000000"), // gets balance of c0
 							},
 							{
 								From:  &common.Address{0xc0},
 								To:    &common.Address{0xc2},
-								Input: hex2Bytes("0xf8b2cb4f000000000000000000000000c100000000000000000000000000000000000000"), // gets balance of c1
+								Input: hex2Bytes("f8b2cb4f000000000000000000000000c100000000000000000000000000000000000000"), // gets balance of c1
 							},
 						},
 					}},
@@ -516,12 +516,12 @@ var EthMulticall = MethodTests{
 							{
 								From:  &common.Address{0xc0},
 								To:    &common.Address{0xc2},
-								Input: hex2Bytes("0xf8b2cb4f000000000000000000000000c000000000000000000000000000000000000000"), // gets balance of c0
+								Input: hex2Bytes("f8b2cb4f000000000000000000000000c000000000000000000000000000000000000000"), // gets balance of c0
 							},
 							{
 								From:  &common.Address{0xc0},
 								To:    &common.Address{0xc2},
-								Input: hex2Bytes("0xf8b2cb4f000000000000000000000000c100000000000000000000000000000000000000"), // gets balance of c1
+								Input: hex2Bytes("f8b2cb4f000000000000000000000000c100000000000000000000000000000000000000"), // gets balance of c1
 							},
 							{
 								From:  &common.Address{0xc0},
@@ -534,12 +534,12 @@ var EthMulticall = MethodTests{
 							{
 								From:  &common.Address{0xc0},
 								To:    &common.Address{0xc2},
-								Input: hex2Bytes("0xf8b2cb4f000000000000000000000000c000000000000000000000000000000000000000"), // gets balance of c0
+								Input: hex2Bytes("f8b2cb4f000000000000000000000000c000000000000000000000000000000000000000"), // gets balance of c0
 							},
 							{
 								From:  &common.Address{0xc0},
 								To:    &common.Address{0xc2},
-								Input: hex2Bytes("0xf8b2cb4f000000000000000000000000c100000000000000000000000000000000000000"), // gets balance of c1
+								Input: hex2Bytes("f8b2cb4f000000000000000000000000c100000000000000000000000000000000000000"), // gets balance of c1
 							},
 							{
 								From:  &common.Address{0xc0},
@@ -1720,17 +1720,17 @@ var EthMulticall = MethodTests{
 							{
 								From:  &common.Address{0xc0},
 								To:    &common.Address{0xc4},
-								Input: hex2Bytes("0xf8b2cb4f000000000000000000000000c000000000000000000000000000000000000000"), // gets balance of c0
+								Input: hex2Bytes("f8b2cb4f000000000000000000000000c000000000000000000000000000000000000000"), // gets balance of c0
 							},
 							{
 								From:  &common.Address{0xc0},
 								To:    &common.Address{0xc4},
-								Input: hex2Bytes("0xf8b2cb4f000000000000000000000000c200000000000000000000000000000000000000"), // gets balance of c2
+								Input: hex2Bytes("f8b2cb4f000000000000000000000000c200000000000000000000000000000000000000"), // gets balance of c2
 							},
 							{
 								From:  &common.Address{0xc0},
 								To:    &common.Address{0xc4},
-								Input: hex2Bytes("0xf8b2cb4f000000000000000000000000c300000000000000000000000000000000000000"), // gets balance of c3
+								Input: hex2Bytes("f8b2cb4f000000000000000000000000c300000000000000000000000000000000000000"), // gets balance of c3
 							},
 						},
 					}},
@@ -1971,7 +1971,6 @@ var EthMulticall = MethodTests{
 			func(ctx context.Context, t *T) error {
 				feeRecipient := common.Address{0xc2}
 				randDao := &common.Hash{0xc3}
-				baseFee := (*hexutil.Big)(big.NewInt(1007))
 				params := multicallOpts{
 					BlockStateCalls: []CallBatch{{
 						BlockOverrides: &BlockOverrides{
@@ -1980,7 +1979,7 @@ var EthMulticall = MethodTests{
 							GasLimit:     getUint64Ptr(1004),
 							FeeRecipient: &feeRecipient,
 							PrevRandao:   randDao,
-							BaseFee:      baseFee,
+							BaseFee:      (*hexutil.Big)(big.NewInt(1007)),
 						},
 					}},
 				}
@@ -2006,7 +2005,7 @@ var EthMulticall = MethodTests{
 				if *res[0].PrevRandao != *randDao {
 					return fmt.Errorf("unexpected PrevRandao (have: %d, want: %d)", res[0].PrevRandao, randDao)
 				}
-				if res[0].BaseFeePerGas.ToInt().Cmp(baseFee.ToInt()) == 0 {
+				if res[0].BaseFeePerGas.ToInt().Cmp(big.NewInt(1007)) != 0 {
 					return fmt.Errorf("unexpected BaseFeePerGas (have: %d, want: %d)", res[0].BaseFeePerGas.ToInt(), big.NewInt(1007))
 				}
 				return nil
@@ -2525,12 +2524,12 @@ var EthMulticall = MethodTests{
 								{
 									From:  &common.Address{0xc0},
 									To:    &common.Address{0xc1},
-									Input: hex2Bytes("0xf8b2cb4f000000000000000000000000c100000000000000000000000000000000000000"), // gets balance of c1
+									Input: hex2Bytes("f8b2cb4f000000000000000000000000c100000000000000000000000000000000000000"), // gets balance of c1
 								},
 								{
 									From:  &common.Address{0xc0},
 									To:    &common.Address{0xc3},
-									Input: hex2Bytes("0xf8b2cb4f000000000000000000000000c200000000000000000000000000000000000000"), // gets balance of c2
+									Input: hex2Bytes("f8b2cb4f000000000000000000000000c200000000000000000000000000000000000000"), // gets balance of c2
 								},
 							},
 						},
@@ -2872,12 +2871,12 @@ var EthMulticall = MethodTests{
 								{
 									From:  &common.Address{0xc0},
 									To:    &common.Address{0xc1},
-									Input: hex2Bytes("0xf8b2cb4f000000000000000000000000c000000000000000000000000000000000000000"), // gets balance of c0
+									Input: hex2Bytes("f8b2cb4f000000000000000000000000c000000000000000000000000000000000000000"), // gets balance of c0
 								},
 								{
 									From:  &common.Address{0xc0},
 									To:    &common.Address{0xc1},
-									Input: hex2Bytes("0xf8b2cb4f000000000000000000000000c200000000000000000000000000000000000000"), // gets balance of c2
+									Input: hex2Bytes("f8b2cb4f000000000000000000000000c200000000000000000000000000000000000000"), // gets balance of c2
 								},
 							},
 						},
