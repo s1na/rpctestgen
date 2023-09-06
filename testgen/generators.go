@@ -1944,7 +1944,7 @@ var EthMulticall = MethodTests{
 							},
 							Calls: []TransactionArgs{{
 								From:  &common.Address{0xc0},
-								To:    &common.Address{0xc1},
+								To:    &common.Address{0xc2},
 								Value: (*hexutil.Big)(big.NewInt(1000)),
 								Input: hex2Bytes("4b64e4920000000000000000000000000000000000000000000000000000000000000001"),
 							}},
@@ -1970,6 +1970,7 @@ var EthMulticall = MethodTests{
 			"override all values in block and see that they are set in return value",
 			func(ctx context.Context, t *T) error {
 				feeRecipient := common.Address{0xc2}
+				randDao := &common.Hash{0xc3}
 				params := multicallOpts{
 					BlockStateCalls: []CallBatch{{
 						BlockOverrides: &BlockOverrides{
@@ -1977,7 +1978,7 @@ var EthMulticall = MethodTests{
 							Time:         getUint64Ptr(1003),
 							GasLimit:     getUint64Ptr(1004),
 							FeeRecipient: &feeRecipient,
-							PrevRandao:   &common.Hash{0xc3},
+							PrevRandao:   randDao,
 							BaseFee:      (*hexutil.Big)(big.NewInt(1007)),
 						},
 					}},
@@ -2001,8 +2002,8 @@ var EthMulticall = MethodTests{
 				if res[0].FeeRecipient != feeRecipient {
 					return fmt.Errorf("unexpected FeeRecipient (have: %d, want: %d)", res[0].FeeRecipient, feeRecipient)
 				}
-				if res[0].PrevRandao != &(common.Hash{0xc3}) {
-					return fmt.Errorf("unexpected PrevRandao (have: %d, want: %d)", res[0].PrevRandao, 0xc3)
+				if res[0].PrevRandao != randDao {
+					return fmt.Errorf("unexpected PrevRandao (have: %d, want: %d)", res[0].PrevRandao, randDao)
 				}
 				if res[0].BaseFeePerGas != (*hexutil.Big)(big.NewInt(1007)) {
 					return fmt.Errorf("unexpected BaseFeePerGas (have: %d, want: %d)", res[0].BaseFeePerGas.ToInt(), 1007)
