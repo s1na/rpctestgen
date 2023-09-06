@@ -548,7 +548,6 @@ var EthMulticall = MethodTests{
 							},
 						},
 					}},
-					Validation: true,
 				}
 				res := make([]blockResult, 0)
 				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
@@ -571,10 +570,12 @@ var EthMulticall = MethodTests{
 								From:  &common.Address{0xc0},
 								To:    &common.Address{0xc1},
 								Value: *newRPCBalance(1000),
+								Nonce: getUint64Ptr(0),
 							}, {
 								From:  &common.Address{0xc1},
 								To:    &common.Address{0xc2},
 								Value: *newRPCBalance(1000),
+								Nonce: getUint64Ptr(1),
 							}},
 						},
 					},
@@ -587,6 +588,32 @@ var EthMulticall = MethodTests{
 				if len(res) != len(params.BlockStateCalls) {
 					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
 				}
+				return nil
+			},
+		},
+		{
+			"multicall-simple-no-funds-with-validation-without-nonces",
+			"simulates a simple multicall transfer when account has no funds with validation. This should fail as the nonce is not set for the second transaction.",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{
+						{
+							Calls: []TransactionArgs{{
+								From:  &common.Address{0xc0},
+								To:    &common.Address{0xc1},
+								Value: *newRPCBalance(1000),
+								Nonce: getUint64Ptr(0),
+							}, {
+								From:  &common.Address{0xc1},
+								To:    &common.Address{0xc2},
+								Value: *newRPCBalance(1000),
+							}},
+						},
+					},
+					Validation: true,
+				}
+				res := make([]blockResult, 0)
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
 				return nil
 			},
 		},
@@ -1309,9 +1336,7 @@ var EthMulticall = MethodTests{
 					TraceTransfers: true,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
-					return err
-				}
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
 				return nil
 			},
 		},
@@ -1321,9 +1346,7 @@ var EthMulticall = MethodTests{
 			func(ctx context.Context, t *T) error {
 				params := multicallOpts{}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
-					return err
-				}
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
 				return nil
 			},
 		},
@@ -1345,9 +1368,7 @@ var EthMulticall = MethodTests{
 					TraceTransfers: true,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
-					return err
-				}
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
 				return nil
 			},
 		},
@@ -2867,16 +2888,19 @@ var EthMulticall = MethodTests{
 									MaxFeePerGas:         (*hexutil.Big)(big.NewInt(10)),
 									MaxPriorityFeePerGas: (*hexutil.Big)(big.NewInt(10)),
 									Input:                hex2Bytes(""),
+									Nonce:                getUint64Ptr(0),
 								},
 								{
 									From:  &common.Address{0xc0},
 									To:    &common.Address{0xc1},
 									Input: hex2Bytes("f8b2cb4f000000000000000000000000c000000000000000000000000000000000000000"), // gets balance of c0
+									Nonce: getUint64Ptr(1),
 								},
 								{
 									From:  &common.Address{0xc0},
 									To:    &common.Address{0xc1},
 									Input: hex2Bytes("f8b2cb4f000000000000000000000000c200000000000000000000000000000000000000"), // gets balance of c2
+									Nonce: getUint64Ptr(2),
 								},
 							},
 						},
