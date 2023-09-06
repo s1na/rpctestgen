@@ -687,11 +687,11 @@ var EthMulticall = MethodTests{
 							{
 								From:  &common.Address{0xc0},
 								To:    &common.Address{0xc1},
-								Value: (*hexutil.Big)(big.NewInt(1000)),
+								Value: *newRPCBalance(1000),
 							}, {
 								From:  &common.Address{0xc0},
 								To:    &common.Address{0xc3},
-								Value: (*hexutil.Big)(big.NewInt(1000)),
+								Value: *newRPCBalance(1000),
 							},
 						},
 					}, {
@@ -1272,7 +1272,7 @@ var EthMulticall = MethodTests{
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
 							To:    &common.Address{0xc1},
-							Value: (*hexutil.Big)(big.NewInt(1000)),
+							Value: *newRPCBalance(1000),
 						}},
 					}},
 					TraceTransfers: true,
@@ -1303,7 +1303,7 @@ var EthMulticall = MethodTests{
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
 							To:    &common.Address{0xc1},
-							Value: (*hexutil.Big)(big.NewInt(1000)),
+							Value: *newRPCBalance(1000),
 						}},
 					}},
 					TraceTransfers: true,
@@ -1364,7 +1364,7 @@ var EthMulticall = MethodTests{
 							Calls: []TransactionArgs{{
 								From:  &common.Address{0xc0},
 								To:    &common.Address{0xc1},
-								Value: (*hexutil.Big)(big.NewInt(1000)),
+								Value: *newRPCBalance(1000),
 							}},
 						},
 						{
@@ -1374,7 +1374,7 @@ var EthMulticall = MethodTests{
 							Calls: []TransactionArgs{{
 								From:  &common.Address{0xc0},
 								To:    &common.Address{0xc1},
-								Value: (*hexutil.Big)(big.NewInt(1000)),
+								Value: *newRPCBalance(1000),
 							}},
 						},
 					},
@@ -1400,7 +1400,7 @@ var EthMulticall = MethodTests{
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
 							To:    &common.Address{0xc1},
-							Value: (*hexutil.Big)(big.NewInt(1000)),
+							Value: *newRPCBalance(1000),
 						}},
 					}},
 					TraceTransfers: true,
@@ -1419,7 +1419,7 @@ var EthMulticall = MethodTests{
 			},
 		},
 		{
-			"multicall-eth-send-should--produce-more-logs-on-forward",
+			"multicall-eth-send-should-produce-more-logs-on-forward",
 			"we should be getting more logs if eth is forwarded",
 			func(ctx context.Context, t *T) error {
 				params := multicallOpts{
@@ -1431,7 +1431,7 @@ var EthMulticall = MethodTests{
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
 							To:    &common.Address{0xc1},
-							Value: (*hexutil.Big)(big.NewInt(1000)),
+							Value: *newRPCBalance(1000),
 							Input: hex2Bytes("4b64e4920000000000000000000000000000000000000000000000000000000000000001"),
 						}},
 					}},
@@ -1451,7 +1451,7 @@ var EthMulticall = MethodTests{
 			},
 		},
 		{
-			"multicall-eth-send-should--produce-no-logs-on-forward-revert",
+			"multicall-eth-send-should-produce-no-logs-on-forward-revert",
 			"we should be getting no logs if eth is forwarded but then the tx reverts",
 			func(ctx context.Context, t *T) error {
 				params := multicallOpts{
@@ -1464,7 +1464,7 @@ var EthMulticall = MethodTests{
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
 							To:    &common.Address{0xc1},
-							Value: (*hexutil.Big)(big.NewInt(1000)),
+							Value: *newRPCBalance(1000),
 							Input: hex2Bytes("4b64e49200000000000000000000000000000000000000000000000000000000000000c2"), //foward(0xc2)
 						}},
 					}},
@@ -1495,7 +1495,7 @@ var EthMulticall = MethodTests{
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
 							To:    &common.Address{0xc1},
-							Value: (*hexutil.Big)(big.NewInt(1000)),
+							Value: *newRPCBalance(1000),
 						}},
 					}},
 				}
@@ -1635,7 +1635,7 @@ var EthMulticall = MethodTests{
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
 							To:    &common.Address{0xc1},
-							Value: (*hexutil.Big)(big.NewInt(1000)),
+							Value: *newRPCBalance(1000),
 						}},
 					}},
 				}
@@ -1653,7 +1653,7 @@ var EthMulticall = MethodTests{
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
 							To:    &common.Address{0xc1},
-							Value: (*hexutil.Big)(big.NewInt(1000)),
+							Value: *newRPCBalance(1000),
 						}},
 					}},
 					Validation: true,
@@ -1676,7 +1676,7 @@ var EthMulticall = MethodTests{
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
 							To:    &common.Address{0xc1},
-							Value: (*hexutil.Big)(big.NewInt(1)),
+							Value: *newRPCBalance(1),
 						}},
 					}},
 				}
@@ -1945,7 +1945,7 @@ var EthMulticall = MethodTests{
 							Calls: []TransactionArgs{{
 								From:  &common.Address{0xc0},
 								To:    &common.Address{0xc2},
-								Value: (*hexutil.Big)(big.NewInt(1000)),
+								Value: *newRPCBalance(1000),
 								Input: hex2Bytes("4b64e4920000000000000000000000000000000000000000000000000000000000000001"),
 							}},
 						},
