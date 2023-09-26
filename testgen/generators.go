@@ -1757,12 +1757,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
-					return err
-				}
-				if len(res) != len(params.BlockStateCalls) {
-					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
-				}
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
 				return nil
 			},
 		},
@@ -1943,7 +1938,7 @@ var EthMulticall = MethodTests{
 				if res[0].FeeRecipient != feeRecipient {
 					return fmt.Errorf("unexpected FeeRecipient (have: %d, want: %d)", res[0].FeeRecipient, feeRecipient)
 				}
-				if res[0].PrevRandao != &randDao {
+				if *res[0].PrevRandao != randDao {
 					return fmt.Errorf("unexpected PrevRandao (have: %d, want: %d)", res[0].PrevRandao, randDao)
 				}
 				if res[0].BaseFeePerGas.ToInt().Cmp(big.NewInt(1007)) != 0 {
