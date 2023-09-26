@@ -1188,9 +1188,6 @@ var EthMulticall = MethodTests{
 				params := multicallOpts{
 					BlockStateCalls: []CallBatch{{
 						StateOverrides: &StateOverride{
-							common.Address{0xc0}: OverrideAccount{
-								Balance: newRPCBalance(2000000),
-							},
 							common.Address{0xc2}: OverrideAccount{
 								Code: selfDestructor(),
 							},
@@ -3402,7 +3399,7 @@ type blockResult struct {
 }
 
 type callResult struct {
-	ReturnValue hexutil.Bytes  `json:"return"`
+	ReturnValue hexutil.Bytes  `json:"ReturnValue"`
 	Logs        []*types.Log   `json:"logs"`
 	Transfers   []transfer     `json:"transfers,omitempty"`
 	GasUsed     hexutil.Uint64 `json:"gasUsed"`
