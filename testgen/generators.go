@@ -2478,7 +2478,7 @@ var EthMulticall = MethodTests{
 									Input: hex2Bytes(""),
 								},
 							},
-						}
+						},
 					},
 				}
 				res := make([]blockResult, 0)
