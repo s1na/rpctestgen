@@ -850,7 +850,7 @@ var EthMulticall = MethodTests{
 			},
 		},
 		{
-			"multicall-block-timestamp-non-incement",
+			"multicall-block-timestamp-non-increment",
 			"Error: simulates calls with timestamp staying the same",
 			func(ctx context.Context, t *T) error {
 				params := multicallOpts{
@@ -3463,8 +3463,8 @@ type callResult struct {
 }
 
 type errorResult struct {
-	Code    hexutil.Uint64 `json:"code"`
-	Message *string        `json:"message"`
+	Code    *big.Int `json:"code"`
+	Message *string  `json:"message"`
 }
 
 type transfer struct {
