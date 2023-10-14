@@ -1759,8 +1759,8 @@ var EthMulticall = MethodTests{
 			},
 		},
 		{
-			"multicall-move-to-accounts-to-same-38023",
-			"Move two accounts to the same destination (-38023)",
+			"multicall-move-two-non-precompiles-accounts-to-same",
+			"Move two non-precompiles to same adddress",
 			func(ctx context.Context, t *T) error {
 				params := multicallOpts{
 					BlockStateCalls: []CallBatch{{
@@ -1769,6 +1769,29 @@ var EthMulticall = MethodTests{
 								MovePrecompileToAddress: &common.Address{0xc2},
 							},
 							common.Address{0x2}: OverrideAccount{
+								MovePrecompileToAddress: &common.Address{0xc2},
+							},
+						},
+					}},
+				}
+				res := make([]blockResult, 0)
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				return nil
+			},
+		},
+		{
+			"multicall-move-two-accounts-to-same-38023",
+			"Move two accounts to the same destination (-38023)",
+			func(ctx context.Context, t *T) error {
+				ecRecoverAddress := common.BytesToAddress(*hex2Bytes("0000000000000000000000000000000000000001"))
+				keccakAddress := common.BytesToAddress(*hex2Bytes("0000000000000000000000000000000000000002"))
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{{
+						StateOverrides: &StateOverride{
+							ecRecoverAddress: OverrideAccount{
+								MovePrecompileToAddress: &common.Address{0xc2},
+							},
+							keccakAddress: OverrideAccount{
 								MovePrecompileToAddress: &common.Address{0xc2},
 							},
 						},
@@ -2424,6 +2447,38 @@ var EthMulticall = MethodTests{
 								Time:   getUint64Ptr(200),
 							},
 						},
+					},
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.BlockStateCalls) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-get-block-properties",
+			"gets various block properties from chain",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{
+						{
+							StateOverrides: &StateOverride{
+								common.Address{0xc1}: OverrideAccount{
+									Code: getBlockProperties(),
+								},
+							},
+							Calls: []TransactionArgs{
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc1},
+									Input: hex2Bytes(""),
+								},
+							},
+						}
 					},
 				}
 				res := make([]blockResult, 0)
@@ -3404,7 +3459,12 @@ type callResult struct {
 	Transfers   []transfer     `json:"transfers,omitempty"`
 	GasUsed     hexutil.Uint64 `json:"gasUsed"`
 	Status      hexutil.Uint64 `json:"status"`
-	Error       *string        `json:"error,omitempty"`
+	Error       errorResult    `json:"error,omitempty"`
+}
+
+type errorResult struct {
+	Code    hexutil.Uint64 `json:"code"`
+	Message *string        `json:"message"`
 }
 
 type transfer struct {
