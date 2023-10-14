@@ -1024,7 +1024,7 @@ var EthMulticall = MethodTests{
 				if len(res[0].Calls) != 1 {
 					return fmt.Errorf("unexpected number of call results (have: %d, want: %d)", len(res[0].Calls), 1)
 				}
-				if err := checkBlockHash(common.BytesToHash(res[0].Calls[0].ReturnValue), t.chain.GetHeaderByNumber(1).Hash()); err != nil {
+				if err := checkBlockHash(common.BytesToHash(res[0].Calls[0].ReturnData), t.chain.GetHeaderByNumber(1).Hash()); err != nil {
 					return err
 				}
 				return nil
@@ -1099,15 +1099,15 @@ var EthMulticall = MethodTests{
 				}
 
 				// should equal to block number ones hash
-				if err := checkBlockHash(common.BytesToHash(res[0].Calls[0].ReturnValue), t.chain.GetHeaderByNumber(1).Hash()); err != nil {
+				if err := checkBlockHash(common.BytesToHash(res[0].Calls[0].ReturnData), t.chain.GetHeaderByNumber(1).Hash()); err != nil {
 					return err
 				}
 				// should equal first generated BlockStateCalls hash
-				if err := checkBlockHash(common.BytesToHash(res[1].Calls[0].ReturnValue), res[0].Hash); err != nil {
+				if err := checkBlockHash(common.BytesToHash(res[1].Calls[0].ReturnData), res[0].Hash); err != nil {
 					return err
 				}
 				// should equal keccack256(rlp([blockhash_20, 29]))
-				if err := checkBlockHash(common.BytesToHash(res[2].Calls[0].ReturnValue), common.BytesToHash(*hex2Bytes("9f77a47d3fbad17b981f2f21022effd528670e580382921735559c1f31774191"))); err != nil {
+				if err := checkBlockHash(common.BytesToHash(res[2].Calls[0].ReturnData), common.BytesToHash(*hex2Bytes("9f77a47d3fbad17b981f2f21022effd528670e580382921735559c1f31774191"))); err != nil {
 					return err
 				}
 				return nil
@@ -1170,11 +1170,11 @@ var EthMulticall = MethodTests{
 					return err
 				}
 				//keccack256(rlp([blockhash_1, 2])
-				if err := checkBlockHash(common.BytesToHash(res[0].Calls[0].ReturnValue), common.BytesToHash(*hex2Bytes("b71624aa776736b9a340cae6a536e93c71e376907a5b23c196aa056450a2b983"))); err != nil {
+				if err := checkBlockHash(common.BytesToHash(res[0].Calls[0].ReturnData), common.BytesToHash(*hex2Bytes("b71624aa776736b9a340cae6a536e93c71e376907a5b23c196aa056450a2b983"))); err != nil {
 					return err
 				}
 				//keccack256(rlp([blockhash_10, 19])
-				if err := checkBlockHash(common.BytesToHash(res[1].Calls[0].ReturnValue), common.BytesToHash(*hex2Bytes("5679ee58a0ff6a8fa7b177db27c76774f1ddc04464d1999aad7aba7ac911593b"))); err != nil {
+				if err := checkBlockHash(common.BytesToHash(res[1].Calls[0].ReturnData), common.BytesToHash(*hex2Bytes("5679ee58a0ff6a8fa7b177db27c76774f1ddc04464d1999aad7aba7ac911593b"))); err != nil {
 					return err
 				}
 
@@ -1235,14 +1235,14 @@ var EthMulticall = MethodTests{
 					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
 				}
 				noCode := "0x00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000"
-				if res[1].Calls[0].ReturnValue.String() == noCode {
-					return fmt.Errorf("res 1 overrided contract does not have contract code: %s", res[1].Calls[0].ReturnValue.String())
+				if res[1].Calls[0].ReturnData.String() == noCode {
+					return fmt.Errorf("res 1 overrided contract does not have contract code: %s", res[1].Calls[0].ReturnData.String())
 				}
-				if res[3].Calls[0].ReturnValue.String() != noCode {
-					return fmt.Errorf("res 3 self destructed code does have contract code: %s", res[3].Calls[0].ReturnValue.String())
+				if res[3].Calls[0].ReturnData.String() != noCode {
+					return fmt.Errorf("res 3 self destructed code does have contract code: %s", res[3].Calls[0].ReturnData.String())
 				}
-				if res[5].Calls[0].ReturnValue.String() == noCode {
-					return fmt.Errorf("res 5 overrided contract does not have contract code: %s", res[5].Calls[0].ReturnValue.String())
+				if res[5].Calls[0].ReturnData.String() == noCode {
+					return fmt.Errorf("res 5 overrided contract does not have contract code: %s", res[5].Calls[0].ReturnData.String())
 				}
 				return nil
 			},
@@ -2080,22 +2080,22 @@ var EthMulticall = MethodTests{
 					return fmt.Errorf("unexpected number of call results (have: %d, want: %d)", len(res[0].Calls), len(params.BlockStateCalls[0].Calls))
 				}
 				zeroAddr := common.Address{0x0}
-				if common.BytesToAddress(res[0].Calls[0].ReturnValue) != zeroAddr {
-					return fmt.Errorf("unexpected returnvalue (have: %d, want: %d)", common.BytesToAddress(res[0].Calls[0].ReturnValue), zeroAddr)
+				if common.BytesToAddress(res[0].Calls[0].ReturnData) != zeroAddr {
+					return fmt.Errorf("unexpected ReturnData (have: %d, want: %d)", common.BytesToAddress(res[0].Calls[0].ReturnData), zeroAddr)
 				}
 				successReturn := common.BytesToAddress(*hex2Bytes("b11CaD98Ad3F8114E0b3A1F6E7228bc8424dF48a"))
-				if common.BytesToAddress(res[0].Calls[1].ReturnValue) != successReturn {
-					return fmt.Errorf("unexpected calls 1 returnvalue (have: %d, want: %d)", common.BytesToAddress(res[0].Calls[1].ReturnValue), successReturn)
+				if common.BytesToAddress(res[0].Calls[1].ReturnData) != successReturn {
+					return fmt.Errorf("unexpected calls 1 ReturnData (have: %d, want: %d)", common.BytesToAddress(res[0].Calls[1].ReturnData), successReturn)
 				}
 				vitalikReturn := common.BytesToAddress(*hex2Bytes("d8dA6BF26964aF9D7eEd9e03E53415D37aA96045"))
-				if common.BytesToAddress(res[0].Calls[3].ReturnValue) != vitalikReturn {
-					return fmt.Errorf("unexpected calls 3 returnvalue (have: %d, want: %d)", common.BytesToAddress(res[0].Calls[3].ReturnValue), vitalikReturn)
+				if common.BytesToAddress(res[0].Calls[3].ReturnData) != vitalikReturn {
+					return fmt.Errorf("unexpected calls 3 ReturnData (have: %d, want: %d)", common.BytesToAddress(res[0].Calls[3].ReturnData), vitalikReturn)
 				}
-				if common.BytesToAddress(res[0].Calls[4].ReturnValue) != successReturn {
-					return fmt.Errorf("unexpected calls 4 returnvalue (have: %d, want: %d)", common.BytesToAddress(res[0].Calls[4].ReturnValue), successReturn)
+				if common.BytesToAddress(res[0].Calls[4].ReturnData) != successReturn {
+					return fmt.Errorf("unexpected calls 4 ReturnData (have: %d, want: %d)", common.BytesToAddress(res[0].Calls[4].ReturnData), successReturn)
 				}
-				if common.BytesToAddress(res[0].Calls[5].ReturnValue) != zeroAddr {
-					return fmt.Errorf("unexpected calls 5 returnvalue (have: %d, want: %d)", common.BytesToAddress(res[0].Calls[5].ReturnValue), zeroAddr)
+				if common.BytesToAddress(res[0].Calls[5].ReturnData) != zeroAddr {
+					return fmt.Errorf("unexpected calls 5 ReturnData (have: %d, want: %d)", common.BytesToAddress(res[0].Calls[5].ReturnData), zeroAddr)
 				}
 				return nil
 			},
@@ -2400,25 +2400,25 @@ var EthMulticall = MethodTests{
 				if len(res) != len(params.BlockStateCalls) {
 					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
 				}
-				if res[0].Calls[2].ReturnValue.String() != "0x0000000000000000000000000000000000000000000000000000000000000001" {
-					return fmt.Errorf("unexpected call result (res[0].Calls[2]) (have: %s, want: %s)", res[0].Calls[2].ReturnValue.String(), "0x0000000000000000000000000000000000000000000000000000000000000001")
+				if res[0].Calls[2].ReturnData.String() != "0x0000000000000000000000000000000000000000000000000000000000000001" {
+					return fmt.Errorf("unexpected call result (res[0].Calls[2]) (have: %s, want: %s)", res[0].Calls[2].ReturnData.String(), "0x0000000000000000000000000000000000000000000000000000000000000001")
 				}
-				if res[0].Calls[3].ReturnValue.String() != "0x0000000000000000000000000000000000000000000000000000000000000002" {
-					return fmt.Errorf("unexpected call result (res[0].Calls[3]) (have: %s, want: %s)", res[0].Calls[3].ReturnValue.String(), "0x0000000000000000000000000000000000000000000000000000000000000002")
-				}
-
-				if res[1].Calls[0].ReturnValue.String() != "0x1200000000000000000000000000000000000000000000000000000000000000" {
-					return fmt.Errorf("unexpected call result (res[1].Calls[0]) (have: %s, want: %s)", res[1].Calls[0].ReturnValue.String(), "0x1200000000000000000000000000000000000000000000000000000000000000")
-				}
-				if res[1].Calls[1].ReturnValue.String() != "0x0000000000000000000000000000000000000000000000000000000000000002" {
-					return fmt.Errorf("unexpected call result (res[1].Calls[1]) (have: %s, want: %s)", res[1].Calls[1].ReturnValue.String(), "0x0000000000000000000000000000000000000000000000000000000000000002")
+				if res[0].Calls[3].ReturnData.String() != "0x0000000000000000000000000000000000000000000000000000000000000002" {
+					return fmt.Errorf("unexpected call result (res[0].Calls[3]) (have: %s, want: %s)", res[0].Calls[3].ReturnData.String(), "0x0000000000000000000000000000000000000000000000000000000000000002")
 				}
 
-				if res[2].Calls[0].ReturnValue.String() != "0x1200000000000000000000000000000000000000000000000000000000000000" {
-					return fmt.Errorf("unexpected call result (res[2].Calls[0]) (have: %s, want: %s)", res[2].Calls[0].ReturnValue.String(), "0x1200000000000000000000000000000000000000000000000000000000000000")
+				if res[1].Calls[0].ReturnData.String() != "0x1200000000000000000000000000000000000000000000000000000000000000" {
+					return fmt.Errorf("unexpected call result (res[1].Calls[0]) (have: %s, want: %s)", res[1].Calls[0].ReturnData.String(), "0x1200000000000000000000000000000000000000000000000000000000000000")
 				}
-				if res[2].Calls[1].ReturnValue.String() != "0x0000000000000000000000000000000000000000000000000000000000000000" {
-					return fmt.Errorf("unexpected call result (res[2].Calls[1]) (have: %s, want: %s)", res[2].Calls[1].ReturnValue.String(), "0x0000000000000000000000000000000000000000000000000000000000000000")
+				if res[1].Calls[1].ReturnData.String() != "0x0000000000000000000000000000000000000000000000000000000000000002" {
+					return fmt.Errorf("unexpected call result (res[1].Calls[1]) (have: %s, want: %s)", res[1].Calls[1].ReturnData.String(), "0x0000000000000000000000000000000000000000000000000000000000000002")
+				}
+
+				if res[2].Calls[0].ReturnData.String() != "0x1200000000000000000000000000000000000000000000000000000000000000" {
+					return fmt.Errorf("unexpected call result (res[2].Calls[0]) (have: %s, want: %s)", res[2].Calls[0].ReturnData.String(), "0x1200000000000000000000000000000000000000000000000000000000000000")
+				}
+				if res[2].Calls[1].ReturnData.String() != "0x0000000000000000000000000000000000000000000000000000000000000000" {
+					return fmt.Errorf("unexpected call result (res[2].Calls[1]) (have: %s, want: %s)", res[2].Calls[1].ReturnData.String(), "0x0000000000000000000000000000000000000000000000000000000000000000")
 				}
 				return nil
 			},
@@ -3454,12 +3454,12 @@ type blockResult struct {
 }
 
 type callResult struct {
-	ReturnValue hexutil.Bytes  `json:"ReturnValue"`
-	Logs        []*types.Log   `json:"logs"`
-	Transfers   []transfer     `json:"transfers,omitempty"`
-	GasUsed     hexutil.Uint64 `json:"gasUsed"`
-	Status      hexutil.Uint64 `json:"status"`
-	Error       errorResult    `json:"error,omitempty"`
+	ReturnData hexutil.Bytes  `json:"ReturnData"`
+	Logs       []*types.Log   `json:"logs"`
+	Transfers  []transfer     `json:"transfers,omitempty"`
+	GasUsed    hexutil.Uint64 `json:"gasUsed"`
+	Status     hexutil.Uint64 `json:"status"`
+	Error      errorResult    `json:"error,omitempty"`
 }
 
 type errorResult struct {

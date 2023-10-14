@@ -50,7 +50,7 @@ func checkBlockNumber(value hexutil.Uint64, expected hexutil.Uint64) error {
 
 func checkBlockHash(value common.Hash, expected common.Hash) error {
 	if value != expected {
-		return fmt.Errorf("unexpected block hash value(have: %d, want: %d)", value, expected)
+		return fmt.Errorf("unexpected block hash value(have: %s, want: %s)", value.Hex(), expected.Hex())
 	}
 	return nil
 }
@@ -216,10 +216,10 @@ func getStorageTester() *hexutil.Bytes {
 		        if (slot == 0) { value0 = value; return; }
 		        if (slot == 1) { value1 = value; return; }
 		    }
-		    function getValue(uint256 slot) view external returns (uint256 returnValue) {
+		    function getValue(uint256 slot) view external returns (uint256 ReturnData) {
 		        require(slot < 2, "too big slot");
-		        if (slot == 0) { returnValue = value0; }
-		        if (slot == 1) { returnValue = value1; }
+		        if (slot == 0) { ReturnData = value0; }
+		        if (slot == 1) { ReturnData = value1; }
 		    }
 		}
 	*/
