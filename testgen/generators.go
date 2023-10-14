@@ -2509,7 +2509,7 @@ var EthMulticall = MethodTests{
 							BlockOverrides: &BlockOverrides{
 								Number:       (*hexutil.Big)(big.NewInt(10)),
 								Time:         getUint64Ptr(100),
-								GasLimit:     getUint64Ptr(10),
+								GasLimit:     getUint64Ptr(190000),
 								FeeRecipient: &common.Address{0xc0},
 								PrevRandao:   &prevRandDao1,
 								BaseFee:      (*hexutil.Big)(big.NewInt(10)),
@@ -2526,7 +2526,7 @@ var EthMulticall = MethodTests{
 							BlockOverrides: &BlockOverrides{
 								Number:       (*hexutil.Big)(big.NewInt(20)),
 								Time:         getUint64Ptr(200),
-								GasLimit:     getUint64Ptr(20),
+								GasLimit:     getUint64Ptr(190001),
 								FeeRecipient: &common.Address{0xc1},
 								PrevRandao:   &prevRandDao2,
 								BaseFee:      (*hexutil.Big)(big.NewInt(20)),
@@ -2543,7 +2543,7 @@ var EthMulticall = MethodTests{
 							BlockOverrides: &BlockOverrides{
 								Number:       (*hexutil.Big)(big.NewInt(21)),
 								Time:         getUint64Ptr(300),
-								GasLimit:     getUint64Ptr(21),
+								GasLimit:     getUint64Ptr(190002),
 								FeeRecipient: &common.Address{0xc2},
 								PrevRandao:   &prevRandDao3,
 								BaseFee:      (*hexutil.Big)(big.NewInt(30)),
