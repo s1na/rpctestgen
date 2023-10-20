@@ -18,6 +18,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/ethclient/gethclient"
 	"github.com/ethereum/go-ethereum/params"
+	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/rpc"
 )
 
@@ -1107,7 +1108,11 @@ var EthMulticall = MethodTests{
 					return err
 				}
 				// should equal keccack256(rlp([blockhash_20, 29]))
-				if err := checkBlockHash(common.BytesToHash(res[2].Calls[0].ReturnData), common.BytesToHash(*hex2Bytes("9f77a47d3fbad17b981f2f21022effd528670e580382921735559c1f31774191"))); err != nil {
+				rlp, rlpError := rlp.EncodeToBytes([][]byte{res[1].Hash.Bytes(), big.NewInt(int64(29)).Bytes()})
+				if rlpError != nil {
+					return rlpError
+				}
+				if err := checkBlockHash(common.BytesToHash(res[2].Calls[0].ReturnData), crypto.Keccak256Hash(rlp)); err != nil {
 					return err
 				}
 				return nil
@@ -1130,11 +1135,18 @@ var EthMulticall = MethodTests{
 						BlockOverrides: &BlockOverrides{
 							Number: (*hexutil.Big)(big.NewInt(10)),
 						},
-						Calls: []TransactionArgs{{
-							From:  &common.Address{0xc0},
-							To:    &common.Address{0xc2},
-							Input: hex2Bytes("ee82ac5e0000000000000000000000000000000000000000000000000000000000000002"),
-						}},
+						Calls: []TransactionArgs{
+							{
+								From:  &common.Address{0xc0},
+								To:    &common.Address{0xc2},
+								Input: hex2Bytes("ee82ac5e0000000000000000000000000000000000000000000000000000000000000001"),
+							},
+							{
+								From:  &common.Address{0xc0},
+								To:    &common.Address{0xc2},
+								Input: hex2Bytes("ee82ac5e0000000000000000000000000000000000000000000000000000000000000002"),
+							},
+						},
 					}, {
 						BlockOverrides: &BlockOverrides{
 							Number: (*hexutil.Big)(big.NewInt(20)),
@@ -1154,27 +1166,28 @@ var EthMulticall = MethodTests{
 					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
 				}
 
-				for i := 0; i < len(res); i++ {
-					if len(res[i].Calls) != 1 {
-						return fmt.Errorf("unexpected number of call results (have: %d, want: %d)", len(res[i].Calls), 1)
-					}
-					if res[i].Calls[0].Status != 0x1 {
-						return fmt.Errorf("unexpected status value(have: %d, want: %d)", res[i].Calls[0].Status, 0x1)
-					}
-				}
-
 				if err := checkBlockNumber(res[0].Number, 10); err != nil {
 					return err
 				}
 				if err := checkBlockNumber(res[1].Number, 20); err != nil {
 					return err
 				}
+
+				rlp_1, rlpError := rlp.EncodeToBytes([][]byte{res[0].Calls[0].ReturnData, big.NewInt(int64(2)).Bytes()})
+				if rlpError != nil {
+					return rlpError
+				}
 				//keccack256(rlp([blockhash_1, 2])
-				if err := checkBlockHash(common.BytesToHash(res[0].Calls[0].ReturnData), common.BytesToHash(*hex2Bytes("b71624aa776736b9a340cae6a536e93c71e376907a5b23c196aa056450a2b983"))); err != nil {
+				if err := checkBlockHash(common.BytesToHash(res[0].Calls[1].ReturnData), crypto.Keccak256Hash(rlp_1)); err != nil {
 					return err
 				}
+
+				rlp_10, rlpError := rlp.EncodeToBytes([][]byte{res[0].Hash.Bytes(), big.NewInt(int64(19)).Bytes()})
+				if rlpError != nil {
+					return rlpError
+				}
 				//keccack256(rlp([blockhash_10, 19])
-				if err := checkBlockHash(common.BytesToHash(res[1].Calls[0].ReturnData), common.BytesToHash(*hex2Bytes("5679ee58a0ff6a8fa7b177db27c76774f1ddc04464d1999aad7aba7ac911593b"))); err != nil {
+				if err := checkBlockHash(common.BytesToHash(res[1].Calls[0].ReturnData), crypto.Keccak256Hash(rlp_10)); err != nil {
 					return err
 				}
 
