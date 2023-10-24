@@ -2939,6 +2939,105 @@ var EthMulticall = MethodTests{
 				return nil
 			},
 		},
+		{
+			"multicall-self-destructive-contract-produces-logs",
+			"self destructive contract produces logs",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{{
+						StateOverrides: &StateOverride{
+							common.Address{0xc2}: OverrideAccount{
+								Code:    selfDestructor(),
+								Balance: newRPCBalance(2000000),
+							},
+						},
+						Calls: []TransactionArgs{{
+							From:  &common.Address{0xc0},
+							To:    &common.Address{0xc2},
+							Input: hex2Bytes("83197ef0"), //destroy()
+						}},
+					}},
+					TraceTransfers: true,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-no-fields-call",
+			"make a call with no fields",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{{
+						Calls: []TransactionArgs{{}},
+					}},
+					TraceTransfers: true,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-only-from-transaction",
+			"make a call with only from field",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{{
+						Calls: []TransactionArgs{{
+							From: &common.Address{0xc0},
+						}},
+					}},
+					TraceTransfers: true,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-only-from-to-transaction",
+			"make a call with only from and to fields",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{{
+						Calls: []TransactionArgs{{
+							From: &common.Address{0xc0},
+							To:   &common.Address{0xc1},
+						}},
+					}},
+					TraceTransfers: true,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-big-block-state-calls-array",
+			"Have a block state calls with 300 blocks",
+			func(ctx context.Context, t *T) error {
+				calls := make([]CallBatch, 300)
+				params := multicallOpts{
+					BlockStateCalls: calls,
+					TraceTransfers:  true,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				return nil
+			},
+		},
 	},
 }
 
