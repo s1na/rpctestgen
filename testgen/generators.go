@@ -1298,6 +1298,67 @@ var EthMulticall = MethodTests{
 			},
 		},
 		{
+			"multicall-run-gas-spending",
+			"spend a lot gas in separate blocks",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{
+						{
+							StateOverrides: &StateOverride{
+								common.Address{0xc0}: OverrideAccount{
+									Balance: newRPCBalance(2000000),
+								},
+								common.Address{0xc2}: OverrideAccount{
+									Code: gasSpender(),
+								},
+							},
+							BlockOverrides: &BlockOverrides{
+								GasLimit: getUint64Ptr(1500000),
+							},
+							Calls: []TransactionArgs{
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc2},
+									Input: hex2Bytes("815b8ab40000000000000000000000000000000000000000000000000000000000000000"), //spendGas(0)
+								},
+							},
+						},
+						{
+							Calls: []TransactionArgs{
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc2},
+									Input: hex2Bytes("815b8ab40000000000000000000000000000000000000000000000000000000000000000"), //spendGas(0)
+								},
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc2},
+									Input: hex2Bytes("815b8ab400000000000000000000000000000000000000000000000000000000000f4240"), //spendGas(1000000)
+								},
+							},
+						},
+						{
+							Calls: []TransactionArgs{
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc2},
+									Input: hex2Bytes("815b8ab40000000000000000000000000000000000000000000000000000000000000000"), //spendGas(0)
+								},
+								{
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc2},
+									Input: hex2Bytes("815b8ab400000000000000000000000000000000000000000000000000000000000f4240"), //spendGas(1000000)
+								},
+							},
+						},
+					},
+				}
+				res := make([]blockResult, 0)
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				return nil
+			},
+		},
+		{
 			"multicall-eth-send-should-produce-logs",
 			"when sending eth we should get ETH logs when traceTransfers is set",
 			func(ctx context.Context, t *T) error {
@@ -2747,6 +2808,133 @@ var EthMulticall = MethodTests{
 				}
 				if len(res) != len(params.BlockStateCalls) {
 					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-contract-calls-itself",
+			"contract calls itself",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{
+						{
+							StateOverrides: &StateOverride{
+								common.Address{0xc0}: OverrideAccount{
+									Code: getBlockProperties(),
+								},
+							},
+							Calls: []TransactionArgs{
+								{
+									From: &common.Address{0xc0},
+									To:   &common.Address{0xc0},
+								},
+							},
+						},
+					},
+					TraceTransfers: true,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-long-block-distances",
+			"check that parameters adjust the same way when there's big distances between block numbers",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{
+						{
+							StateOverrides: &StateOverride{
+								common.Address{0xc0}: OverrideAccount{
+									Code: getBlockProperties(),
+								},
+							},
+							Calls: []TransactionArgs{
+								{
+									From: &common.Address{0xc1},
+									To:   &common.Address{0xc0},
+								},
+							},
+							BlockOverrides: &BlockOverrides{
+								Number: (*hexutil.Big)(big.NewInt(10)),
+							},
+						},
+						{
+							Calls: []TransactionArgs{
+								{
+									From: &common.Address{0xc1},
+									To:   &common.Address{0xc0},
+								},
+							},
+							BlockOverrides: &BlockOverrides{
+								Number: (*hexutil.Big)(big.NewInt(100)),
+							},
+						},
+						{
+							Calls: []TransactionArgs{
+								{
+									From: &common.Address{0xc1},
+									To:   &common.Address{0xc0},
+								},
+							},
+							BlockOverrides: &BlockOverrides{
+								Number: (*hexutil.Big)(big.NewInt(101)),
+							},
+						},
+						{
+							Calls: []TransactionArgs{
+								{
+									From: &common.Address{0xc1},
+									To:   &common.Address{0xc0},
+								},
+							},
+							BlockOverrides: &BlockOverrides{
+								Number: (*hexutil.Big)(big.NewInt(1000)),
+							},
+						},
+						{
+							Calls: []TransactionArgs{
+								{
+									From: &common.Address{0xc1},
+									To:   &common.Address{0xc0},
+								},
+							},
+							BlockOverrides: &BlockOverrides{
+								Number: (*hexutil.Big)(big.NewInt(10000)),
+							},
+						},
+						{
+							Calls: []TransactionArgs{
+								{
+									From: &common.Address{0xc1},
+									To:   &common.Address{0xc0},
+								},
+							},
+							BlockOverrides: &BlockOverrides{
+								Number: (*hexutil.Big)(big.NewInt(10001)),
+							},
+						},
+						{
+							Calls: []TransactionArgs{
+								{
+									From: &common.Address{0xc1},
+									To:   &common.Address{0xc0},
+								},
+							},
+							BlockOverrides: &BlockOverrides{
+								Number: (*hexutil.Big)(big.NewInt(100000)),
+							},
+						},
+					},
+					TraceTransfers: true,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
 				}
 				return nil
 			},
