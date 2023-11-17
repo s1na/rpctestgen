@@ -546,6 +546,112 @@ var EthMulticall = MethodTests{
 			},
 		},
 		{
+			"multicall-overwrite-existing-contract",
+			"overwrites existing contract with new contract",
+			func(ctx context.Context, t *T) error {
+				contractAddr := common.HexToAddress("0000000000000000000000000000000000031ec7")
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{
+						{
+							Calls: []TransactionArgs{{
+								From:  &common.Address{0xc0},
+								To:    &contractAddr,
+								Input: hex2Bytes("a9059cbb0000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000a"), // transfer(address,uint256)
+							}},
+						},
+						{
+							StateOverrides: &StateOverride{
+								contractAddr: OverrideAccount{Code: getBlockProperties()},
+							},
+							Calls: []TransactionArgs{{
+								From:  &common.Address{0xc0},
+								To:    &contractAddr,
+								Input: hex2Bytes("a9059cbb0000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000a"), // transfer(address,uint256)
+							}},
+						},
+					},
+					Validation: false,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.BlockStateCalls) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
+				}
+				return nil
+			},
+		},
+
+		{
+			"multicall-overflow-nonce",
+			"test to overflow nonce",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{
+						{
+							StateOverrides: &StateOverride{
+								common.Address{0xc0}: OverrideAccount{Nonce: getUint64Ptr(0xFFFFFFFFFFFFFFFF)},
+							},
+							Calls: []TransactionArgs{
+								{
+									From: &common.Address{0xc0},
+									To:   &common.Address{0xc1},
+								},
+								{
+									From: &common.Address{0xc0},
+									To:   &common.Address{0xc1},
+								},
+							},
+						},
+					},
+					Validation: false,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.BlockStateCalls) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-overflow-nonce-validation",
+			"test to overflow nonce-validation",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{
+						{
+							StateOverrides: &StateOverride{
+								common.Address{0xc0}: OverrideAccount{Nonce: getUint64Ptr(0xFFFFFFFFFFFFFFFF)},
+							},
+							Calls: []TransactionArgs{
+								{
+									From: &common.Address{0xc0},
+									To:   &common.Address{0xc1},
+								},
+								{
+									From: &common.Address{0xc0},
+									To:   &common.Address{0xc1},
+								},
+							},
+						},
+					},
+					Validation: true,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.BlockStateCalls) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
+				}
+				return nil
+			},
+		},
+		{
 			"multicall-simple-no-funds-with-balance-querying",
 			"simulates a simple multicall transfer when account has no funds with querying balances before and after",
 			func(ctx context.Context, t *T) error {
@@ -1131,7 +1237,7 @@ var EthMulticall = MethodTests{
 				if len(res) != len(params.BlockStateCalls) {
 					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
 				}
-				if err := checkBlockNumber(res[0].Number, 4); err != nil {
+				if err := checkBlockNumber(res[0].Number, 10); err != nil {
 					return err
 				}
 				if len(res[0].Calls) != 1 {
@@ -1158,7 +1264,7 @@ var EthMulticall = MethodTests{
 							},
 						},
 						BlockOverrides: &BlockOverrides{
-							Number: (*hexutil.Big)(big.NewInt(10)),
+							Number: (*hexutil.Big)(big.NewInt(15)),
 						},
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
@@ -1172,7 +1278,7 @@ var EthMulticall = MethodTests{
 						Calls: []TransactionArgs{{
 							From:  &common.Address{0xc0},
 							To:    &common.Address{0xc2},
-							Input: hex2Bytes("ee82ac5e000000000000000000000000000000000000000000000000000000000000000a"),
+							Input: hex2Bytes("ee82ac5e000000000000000000000000000000000000000000000000000000000000000f"),
 						}},
 					}, {
 						BlockOverrides: &BlockOverrides{
@@ -1201,7 +1307,7 @@ var EthMulticall = MethodTests{
 						return fmt.Errorf("unexpected status value(have: %d, want: %d)", res[i].Calls[0].Status, 0x1)
 					}
 				}
-				if err := checkBlockNumber(res[0].Number, 10); err != nil {
+				if err := checkBlockNumber(res[0].Number, 15); err != nil {
 					return err
 				}
 				if err := checkBlockNumber(res[1].Number, 20); err != nil {
@@ -1245,7 +1351,7 @@ var EthMulticall = MethodTests{
 							},
 						},
 						BlockOverrides: &BlockOverrides{
-							Number: (*hexutil.Big)(big.NewInt(10)),
+							Number: (*hexutil.Big)(big.NewInt(15)),
 						},
 						Calls: []TransactionArgs{
 							{
@@ -1278,7 +1384,7 @@ var EthMulticall = MethodTests{
 					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
 				}
 
-				if err := checkBlockNumber(res[0].Number, 10); err != nil {
+				if err := checkBlockNumber(res[0].Number, 15); err != nil {
 					return err
 				}
 				if err := checkBlockNumber(res[1].Number, 20); err != nil {
@@ -2617,7 +2723,7 @@ var EthMulticall = MethodTests{
 					BlockStateCalls: []CallBatch{
 						{
 							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(10)),
+								Number: (*hexutil.Big)(big.NewInt(15)),
 								Time:   getUint64Ptr(100),
 							},
 						},
@@ -2693,7 +2799,7 @@ var EthMulticall = MethodTests{
 								},
 							},
 							BlockOverrides: &BlockOverrides{
-								Number:       (*hexutil.Big)(big.NewInt(10)),
+								Number:       (*hexutil.Big)(big.NewInt(15)),
 								Time:         getUint64Ptr(100),
 								GasLimit:     getUint64Ptr(190000),
 								FeeRecipient: &common.Address{0xc0},
@@ -2767,7 +2873,7 @@ var EthMulticall = MethodTests{
 								},
 							},
 							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(10)),
+								Number: (*hexutil.Big)(big.NewInt(15)),
 							},
 							Calls: []TransactionArgs{
 								{
@@ -2788,7 +2894,7 @@ var EthMulticall = MethodTests{
 						},
 						{
 							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(11)),
+								Number: (*hexutil.Big)(big.NewInt(16)),
 							},
 							Calls: []TransactionArgs{
 								{
@@ -2818,7 +2924,7 @@ var EthMulticall = MethodTests{
 								},
 							},
 							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(10)),
+								Number: (*hexutil.Big)(big.NewInt(15)),
 							},
 							Calls: []TransactionArgs{
 								{
@@ -2883,7 +2989,7 @@ var EthMulticall = MethodTests{
 								},
 							},
 							BlockOverrides: &BlockOverrides{
-								Number:       (*hexutil.Big)(big.NewInt(10)),
+								Number:       (*hexutil.Big)(big.NewInt(15)),
 								FeeRecipient: &common.Address{0xc2},
 								BaseFee:      (*hexutil.Big)(big.NewInt(10)),
 							},
@@ -2972,7 +3078,7 @@ var EthMulticall = MethodTests{
 								},
 							},
 							BlockOverrides: &BlockOverrides{
-								Number: (*hexutil.Big)(big.NewInt(10)),
+								Number: (*hexutil.Big)(big.NewInt(15)),
 							},
 						},
 						{
