@@ -2,10 +2,12 @@ package testgen
 
 import (
 	"errors"
+	"bytes"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/rlp"
 	"github.com/ethereum/go-ethereum/rpc"
 )
@@ -253,4 +255,22 @@ func getUint64Ptr(value hexutil.Uint64) *hexutil.Uint64 {
 	newUint64 := new(hexutil.Uint64)
 	newUint64 = &value
 	return newUint64
+}
+func checkBlockReceipts(t *T, n uint64, got []*types.Receipt) error {
+	b := t.chain.GetBlockByNumber(n)
+	if b == nil {
+		return fmt.Errorf("block number %d not found", n)
+	}
+	want := t.chain.GetReceiptsByHash(b.Hash())
+	if len(got) != len(want) {
+		return fmt.Errorf("receipts length mismatch (got: %d, want: %d)", len(got), len(want))
+	}
+	for i := range got {
+		got, _ := got[i].MarshalBinary()
+		want, _ := want[i].MarshalBinary()
+		if !bytes.Equal(got, want) {
+			return fmt.Errorf("receipt %d mismatch (got: %x, want: %x)", i, got, want)
+		}
+	}
+	return nil
 }
