@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/ecdsa"
+	"errors"
 	"fmt"
 	"math/big"
 	"reflect"
@@ -24,6 +25,8 @@ import (
 var (
 	addr common.Address
 	pk   *ecdsa.PrivateKey
+
+	contract = common.HexToAddress("0000000000000000000000000000000000031ec7")
 )
 
 func init() {
@@ -60,12 +63,12 @@ type Test struct {
 var AllMethods = []MethodTests{
 	EthBlockNumber,
 	EthGetBlockByNumber,
+	EthGetBlockByHash,
+	// EthGetHeaderByNumber,
+	// EthGetHeaderByHash,
 	EthGetProof,
 	EthChainID,
 	EthGetBalance,
-	// EthGetHeaderByNumber,
-	// EthGetHeaderByHash,
-	EthGetBlockByHash,
 	EthGetCode,
 	EthGetStorage,
 	EthCall,
@@ -79,6 +82,7 @@ var AllMethods = []MethodTests{
 	EthGetTransactionCount,
 	EthGetTransactionByHash,
 	EthGetTransactionReceipt,
+	EthGetBlockReceipts,
 	EthSendRawTransaction,
 	EthGasPrice,
 	EthMaxPriorityFeePerGas,
@@ -246,6 +250,28 @@ var EthGetBlockByHash = MethodTests{
 				return nil
 			},
 		},
+		{
+			"get-block-by-empty-hash",
+			"gets block empty hash",
+			func(ctx context.Context, t *T) error {
+				_, err := t.eth.BlockByHash(ctx, common.Hash{})
+				if !errors.Is(err, ethereum.NotFound) {
+					return errors.New("expected not found error")
+				}
+				return nil
+			},
+		},
+		{
+			"get-block-by-notfound-hash",
+			"gets block not found hash",
+			func(ctx context.Context, t *T) error {
+				_, err := t.eth.BlockByHash(ctx, common.HexToHash("deadbeef"))
+				if !errors.Is(err, ethereum.NotFound) {
+					return errors.New("expected not found error")
+				}
+				return nil
+			},
+		},
 	},
 }
 
@@ -312,6 +338,48 @@ var EthGetBlockByNumber = MethodTests{
 			},
 		},
 		{
+			"get-latest",
+			"gets block latest",
+			func(ctx context.Context, t *T) error {
+				block, err := t.eth.BlockByNumber(ctx, nil)
+				if err != nil {
+					return err
+				}
+				if n := block.Number().Uint64(); n != 9 {
+					return fmt.Errorf("expected block 9, got block %d", n)
+				}
+				return nil
+			},
+		},
+		{
+			"get-safe",
+			"gets block safe",
+			func(ctx context.Context, t *T) error {
+				block, err := t.eth.BlockByNumber(ctx, big.NewInt(int64(rpc.SafeBlockNumber)))
+				if err != nil {
+					return err
+				}
+				if n := block.Number().Uint64(); n != 9 {
+					return fmt.Errorf("expected block 9, got block %d", n)
+				}
+				return nil
+			},
+		},
+		{
+			"get-finalized",
+			"gets block finalized",
+			func(ctx context.Context, t *T) error {
+				block, err := t.eth.BlockByNumber(ctx, big.NewInt(int64(rpc.FinalizedBlockNumber)))
+				if err != nil {
+					return err
+				}
+				if n := block.Number().Uint64(); n != 9 {
+					return fmt.Errorf("expected block 9, got block %d", n)
+				}
+				return nil
+			},
+		},
+		{
 			"get-block-n",
 			"gets block 2",
 			func(ctx context.Context, t *T) error {
@@ -321,6 +389,17 @@ var EthGetBlockByNumber = MethodTests{
 				}
 				if n := block.Number().Uint64(); n != 2 {
 					return fmt.Errorf("expected block 2, got block %d", n)
+				}
+				return nil
+			},
+		},
+		{
+			"get-block-notfound",
+			"gets block notfound",
+			func(ctx context.Context, t *T) error {
+				_, err := t.eth.BlockByNumber(ctx, big.NewInt(1000))
+				if !errors.Is(err, ethereum.NotFound) {
+					return errors.New("get a non-existent block should return notfound")
 				}
 				return nil
 			},
@@ -852,7 +931,6 @@ var EthGetTransactionCount = MethodTests{
 }
 
 // EthGetTransactionByHash stores a list of all tests against the method.
-// TODO: do legacy, al, and dynamic txs
 var EthGetTransactionByHash = MethodTests{
 	"eth_getTransactionByHash",
 	[]Test{
@@ -871,11 +949,92 @@ var EthGetTransactionByHash = MethodTests{
 				return nil
 			},
 		},
+		{
+			"get-legacy-create",
+			"gets a legacy contract create transaction",
+			func(ctx context.Context, t *T) error {
+				want := t.chain.GetBlockByNumber(3).Transactions()[0]
+				got, _, err := t.eth.TransactionByHash(ctx, want.Hash())
+				if err != nil {
+					return err
+				}
+				if got.Hash() != want.Hash() {
+					return fmt.Errorf("tx mismatch (got: %s, want: %s)", got.Hash(), want.Hash())
+				}
+				return nil
+			},
+		},
+		{
+			"get-legacy-input",
+			"gets a legacy transaction with input data",
+			func(ctx context.Context, t *T) error {
+				want := t.chain.GetBlockByNumber(4).Transactions()[0]
+				got, _, err := t.eth.TransactionByHash(ctx, want.Hash())
+				if err != nil {
+					return err
+				}
+				if got.Hash() != want.Hash() {
+					return fmt.Errorf("tx mismatch (got: %s, want: %s)", got.Hash(), want.Hash())
+				}
+				return nil
+			},
+		},
+		{
+			"get-dynamic-fee",
+			"gets a dynamic fee transaction",
+			func(ctx context.Context, t *T) error {
+				want := t.chain.GetBlockByNumber(5).Transactions()[0]
+				got, _, err := t.eth.TransactionByHash(ctx, want.Hash())
+				if err != nil {
+					return err
+				}
+				if got.Hash() != want.Hash() {
+					return fmt.Errorf("tx mismatch (got: %s, want: %s)", got.Hash(), want.Hash())
+				}
+				return nil
+			},
+		},
+		{
+			"get-access-list",
+			"gets an access list transaction",
+			func(ctx context.Context, t *T) error {
+				want := t.chain.GetBlockByNumber(6).Transactions()[0]
+				got, _, err := t.eth.TransactionByHash(ctx, want.Hash())
+				if err != nil {
+					return err
+				}
+				if got.Hash() != want.Hash() {
+					return fmt.Errorf("tx mismatch (got: %s, want: %s)", got.Hash(), want.Hash())
+				}
+				return nil
+			},
+		},
+		{
+			"get-empty-tx",
+			"gets an empty transaction",
+			func(ctx context.Context, t *T) error {
+				_, _, err := t.eth.TransactionByHash(ctx, common.Hash{})
+				if !errors.Is(err, ethereum.NotFound) {
+					return errors.New("expected not found error")
+				}
+				return nil
+			},
+		},
+		{
+			"get-notfound-tx",
+			"gets a not exist transaction",
+			func(ctx context.Context, t *T) error {
+				_, _, err := t.eth.TransactionByHash(ctx, common.HexToHash("deadbeef"))
+				if !errors.Is(err, ethereum.NotFound) {
+					return errors.New("expected not found error")
+				}
+				return nil
+			},
+		},
 	},
 }
 
 // EthGetTransactionReceipt stores a list of all tests against the method.
-// TODO: do legacy, al, and dynamic txs
 var EthGetTransactionReceipt = MethodTests{
 	"eth_getTransactionReceipt",
 	[]Test{
@@ -896,11 +1055,206 @@ var EthGetTransactionReceipt = MethodTests{
 				return nil
 			},
 		},
+		{
+			"get-legacy-contract",
+			"gets a legacy contract create transaction",
+			func(ctx context.Context, t *T) error {
+				block := t.chain.GetBlockByNumber(3)
+				receipt, err := t.eth.TransactionReceipt(ctx, block.Transactions()[0].Hash())
+				if err != nil {
+					return err
+				}
+				got, _ := receipt.MarshalBinary()
+				want, _ := t.chain.GetReceiptsByHash(block.Hash())[0].MarshalBinary()
+				if !bytes.Equal(got, want) {
+					return fmt.Errorf("receipt mismatch (got: %s, want: %s)", hexutil.Bytes(got), hexutil.Bytes(want))
+				}
+				return nil
+			},
+		},
+		{
+			"get-legacy-input",
+			"gets a legacy transaction with input data",
+			func(ctx context.Context, t *T) error {
+				block := t.chain.GetBlockByNumber(4)
+				receipt, err := t.eth.TransactionReceipt(ctx, block.Transactions()[0].Hash())
+				if err != nil {
+					return err
+				}
+				got, _ := receipt.MarshalBinary()
+				want, _ := t.chain.GetReceiptsByHash(block.Hash())[0].MarshalBinary()
+				if !bytes.Equal(got, want) {
+					return fmt.Errorf("receipt mismatch (got: %s, want: %s)", hexutil.Bytes(got), hexutil.Bytes(want))
+				}
+				return nil
+			},
+		},
+		{
+			"get-dynamic-fee",
+			"gets a dynamic fee transaction",
+			func(ctx context.Context, t *T) error {
+				block := t.chain.GetBlockByNumber(5)
+				receipt, err := t.eth.TransactionReceipt(ctx, block.Transactions()[0].Hash())
+				if err != nil {
+					return err
+				}
+				got, _ := receipt.MarshalBinary()
+				want, _ := t.chain.GetReceiptsByHash(block.Hash())[0].MarshalBinary()
+				if !bytes.Equal(got, want) {
+					return fmt.Errorf("receipt mismatch (got: %s, want: %s)", hexutil.Bytes(got), hexutil.Bytes(want))
+				}
+				return nil
+			},
+		},
+		{
+			"get-access-list",
+			"gets an access list transaction",
+			func(ctx context.Context, t *T) error {
+				block := t.chain.GetBlockByNumber(6)
+				receipt, err := t.eth.TransactionReceipt(ctx, block.Transactions()[0].Hash())
+				if err != nil {
+					return err
+				}
+				got, _ := receipt.MarshalBinary()
+				want, _ := t.chain.GetReceiptsByHash(block.Hash())[0].MarshalBinary()
+				if !bytes.Equal(got, want) {
+					return fmt.Errorf("receipt mismatch (got: %s, want: %s)", hexutil.Bytes(got), hexutil.Bytes(want))
+				}
+				return nil
+			},
+		},
+		{
+			"get-empty-tx",
+			"gets an empty transaction",
+			func(ctx context.Context, t *T) error {
+				_, err := t.eth.TransactionReceipt(ctx, common.Hash{})
+				if !errors.Is(err, ethereum.NotFound) {
+					return errors.New("expected not found error")
+				}
+				return nil
+			},
+		},
+		{
+			"get-notfound-tx",
+			"gets a not exist transaction",
+			func(ctx context.Context, t *T) error {
+				_, err := t.eth.TransactionReceipt(ctx, common.HexToHash("deadbeef"))
+				if !errors.Is(err, ethereum.NotFound) {
+					return errors.New("expected not found error")
+				}
+				return nil
+			},
+		},
+	},
+}
+
+var EthGetBlockReceipts = MethodTests{
+	"eth_getBlockReceipts",
+	[]Test{
+		{
+			"get-block-receipts-0",
+			"gets receipts for block 0",
+			func(ctx context.Context, t *T) error {
+				var receipts []*types.Receipt
+				if err := t.rpc.CallContext(ctx, &receipts, "eth_getBlockReceipts", hexutil.Uint64(0)); err != nil {
+					return err
+				}
+				return checkBlockReceipts(t, 0, receipts)
+			},
+		},
+		{
+			"get-block-receipts-n",
+			"gets receipts non-zero block",
+			func(ctx context.Context, t *T) error {
+				var receipts []*types.Receipt
+				if err := t.rpc.CallContext(ctx, &receipts, "eth_getBlockReceipts", hexutil.Uint64(3)); err != nil {
+					return err
+				}
+				return checkBlockReceipts(t, 3, receipts)
+			},
+		},
+		{
+			"get-block-receipts-future",
+			"gets receipts of future block",
+			func(ctx context.Context, t *T) error {
+				var (
+					receipts []*types.Receipt
+					future   = t.chain.CurrentHeader().Number.Uint64() + 1
+				)
+				if err := t.rpc.CallContext(ctx, &receipts, "eth_getBlockReceipts", hexutil.Uint64(future)); err != nil {
+					return err
+				}
+				if len(receipts) != 0 {
+					return fmt.Errorf("expected not found, got: %d receipts)", len(receipts))
+				}
+				return nil
+			},
+		},
+		{
+			"get-block-receipts-earliest",
+			"gets receipts for block earliest",
+			func(ctx context.Context, t *T) error {
+				var receipts []*types.Receipt
+				if err := t.rpc.CallContext(ctx, &receipts, "eth_getBlockReceipts", "earliest"); err != nil {
+					return err
+				}
+				return checkBlockReceipts(t, 0, receipts)
+			},
+		},
+		{
+			"get-block-receipts-latest",
+			"gets receipts for block latest",
+			func(ctx context.Context, t *T) error {
+				var receipts []*types.Receipt
+				if err := t.rpc.CallContext(ctx, &receipts, "eth_getBlockReceipts", "latest"); err != nil {
+					return err
+				}
+				return checkBlockReceipts(t, t.chain.CurrentHeader().Number.Uint64(), receipts)
+			},
+		},
+		{
+			"get-block-receipts-empty",
+			"gets receipts for empty block hash",
+			func(ctx context.Context, t *T) error {
+				var receipts []*types.Receipt
+				if err := t.rpc.CallContext(ctx, &receipts, "eth_getBlockReceipts", common.Hash{}); err != nil {
+					return err
+				}
+				if len(receipts) != 0 {
+					return fmt.Errorf("expected not found, got: %d receipts)", len(receipts))
+				}
+				return nil
+			},
+		},
+		{
+			"get-block-receipts-not-found",
+			"gets receipts for notfound hash",
+			func(ctx context.Context, t *T) error {
+				var receipts []*types.Receipt
+				if err := t.rpc.CallContext(ctx, &receipts, "eth_getBlockReceipts", common.HexToHash("deadbeef")); err != nil {
+					return err
+				}
+				if len(receipts) != 0 {
+					return fmt.Errorf("expected not found, got: %d receipts)", len(receipts))
+				}
+				return nil
+			},
+		},
+		{
+			"get-block-receipts-by-hash",
+			"gets receipts for normal block hash",
+			func(ctx context.Context, t *T) error {
+				var receipts []*types.Receipt
+				if err := t.rpc.CallContext(ctx, &receipts, "eth_getBlockReceipts", t.chain.GetCanonicalHash(5)); err != nil {
+					return err
+				}
+				return checkBlockReceipts(t, 5, receipts)
+			},
+		},
 	},
 }
 
 // EthSendRawTransaction stores a list of all tests against the method.
-// TODO: do legacy, al, and dynamic txs
 var EthSendRawTransaction = MethodTests{
 	"eth_sendRawTransaction",
 	[]Test{
@@ -918,7 +1272,83 @@ var EthSendRawTransaction = MethodTests{
 					GasPrice: new(big.Int).Add(genesis.BaseFee(), big.NewInt(1)),
 					Data:     common.FromHex("5544"),
 				}
-				s := types.MakeSigner(t.chain.Config(), t.chain.CurrentHeader().Number)
+				s := types.LatestSigner(t.chain.Config())
+				tx, _ := types.SignNewTx(pk, s, txdata)
+				if err := t.eth.SendTransaction(ctx, tx); err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
+			"send-dynamic-fee-transaction",
+			"sends a transaction with dynamic fee",
+			func(ctx context.Context, t *T) error {
+				genesis := t.chain.Genesis()
+				state, _ := t.chain.State()
+				fee := big.NewInt(500)
+				fee.Add(fee, genesis.BaseFee())
+				txdata := &types.DynamicFeeTx{
+					Nonce:     state.GetNonce(addr) + 1,
+					To:        nil,
+					Gas:       60000,
+					Value:     big.NewInt(42),
+					GasTipCap: big.NewInt(500),
+					GasFeeCap: fee,
+					Data:      common.FromHex("0x3d602d80600a3d3981f3363d3d373d3d3d363d734d11c446473105a02b5c1ab9ebe9b03f33902a295af43d82803e903d91602b57fd5bf3"), // eip1167.minimal.proxy
+				}
+				s := types.LatestSigner(t.chain.Config())
+				tx, _ := types.SignNewTx(pk, s, txdata)
+				if err := t.eth.SendTransaction(ctx, tx); err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
+			"send-access-list-transaction",
+			"sends a transaction with access list",
+			func(ctx context.Context, t *T) error {
+				genesis := t.chain.Genesis()
+				state, _ := t.chain.State()
+				txdata := &types.AccessListTx{
+					Nonce:    state.GetNonce(addr) + 2,
+					To:       &contract,
+					Gas:      90000,
+					GasPrice: genesis.BaseFee(),
+					Data:     common.FromHex("0xa9059cbb000000000000000000000000cff33720980c026cc155dcb366861477e988fd870000000000000000000000000000000000000000000000000000000002fd6892"), // transfer(address to, uint256 value)
+					AccessList: types.AccessList{
+						{Address: contract, StorageKeys: []common.Hash{{0}, {1}}},
+					},
+				}
+				s := types.LatestSigner(t.chain.Config())
+				tx, _ := types.SignNewTx(pk, s, txdata)
+				if err := t.eth.SendTransaction(ctx, tx); err != nil {
+					return err
+				}
+				return nil
+			},
+		},
+		{
+			"send-dynamic-fee-access-list-transaction",
+			"sends a transaction with dynamic fee and access list",
+			func(ctx context.Context, t *T) error {
+				genesis := t.chain.Genesis()
+				state, _ := t.chain.State()
+				fee := big.NewInt(500)
+				fee.Add(fee, genesis.BaseFee())
+				txdata := &types.DynamicFeeTx{
+					Nonce:     state.GetNonce(addr) + 3,
+					To:        &contract,
+					Gas:       80000,
+					GasTipCap: big.NewInt(500),
+					GasFeeCap: fee,
+					Data:      common.FromHex("0xa9059cbb000000000000000000000000cff33720980c026cc155dcb366861477e988fd870000000000000000000000000000000000000000000000000000000002fd6892"), // transfer(address to, uint256 value)
+					AccessList: types.AccessList{
+						{Address: contract, StorageKeys: []common.Hash{{0}, {1}}},
+					},
+				}
+				s := types.LatestSigner(t.chain.Config())
 				tx, _ := types.SignNewTx(pk, s, txdata)
 				if err := t.eth.SendTransaction(ctx, tx); err != nil {
 					return err
