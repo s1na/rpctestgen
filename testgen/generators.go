@@ -2130,6 +2130,26 @@ var EthMulticall = MethodTests{
 			},
 		},
 		{
+			"multicall-make-call-with-future-block",
+			"start multicall with future block",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{
+						{
+							Calls: []TransactionArgs{{
+								From: &common.Address{0xc0},
+								To:   &common.Address{0xc0},
+							}},
+						},
+					},
+					Validation: true,
+				}
+				res := make([]blockResult, 0)
+				t.rpc.Call(&res, "eth_multicallV1", params, "0x111")
+				return nil
+			},
+		},
+		{
 			"multicall-check-that-nonce-increases",
 			"check that nonce increases",
 			func(ctx context.Context, t *T) error {
