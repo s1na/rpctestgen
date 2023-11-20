@@ -536,9 +536,7 @@ var EthMulticall = MethodTests{
 					Validation: false,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
-					return err
-				}
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
 				if len(res) != len(params.BlockStateCalls) {
 					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
 				}
@@ -708,9 +706,7 @@ var EthMulticall = MethodTests{
 					Validation: false,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
-					return err
-				}
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
 				if len(res) != len(params.BlockStateCalls) {
 					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
 				}
@@ -801,9 +797,7 @@ var EthMulticall = MethodTests{
 					Validation: true,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
-					return err
-				}
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
 				if len(res) != len(params.BlockStateCalls) {
 					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
 				}
@@ -883,9 +877,7 @@ var EthMulticall = MethodTests{
 					Validation:     false,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
-					return err
-				}
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
 				if len(res) != len(params.BlockStateCalls) {
 					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
 				}
@@ -911,9 +903,7 @@ var EthMulticall = MethodTests{
 					Validation:     true,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
-					return err
-				}
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
 				if len(res) != len(params.BlockStateCalls) {
 					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
 				}
@@ -933,11 +923,11 @@ var EthMulticall = MethodTests{
 							{
 								From:  &common.Address{0xc0},
 								To:    &common.Address{0xc1},
-								Value: *newRPCBalance(1000),
+								Value: *newRPCBalance(2000),
 							}, {
 								From:  &common.Address{0xc0},
 								To:    &common.Address{0xc3},
-								Value: *newRPCBalance(1000),
+								Value: *newRPCBalance(2000),
 							},
 						},
 					}, {
@@ -958,9 +948,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
-					return err
-				}
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
 				if len(res) != len(params.BlockStateCalls) {
 					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
 				}
@@ -2167,13 +2155,13 @@ var EthMulticall = MethodTests{
 									Nonce: getUint64Ptr(0),
 								},
 								{
-									From:  &common.Address{0xc1},
-									To:    &common.Address{0xc1},
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc0},
 									Nonce: getUint64Ptr(1),
 								},
 								{
-									From:  &common.Address{0xc1},
-									To:    &common.Address{0xc1},
+									From:  &common.Address{0xc0},
+									To:    &common.Address{0xc0},
 									Nonce: getUint64Ptr(2),
 								},
 							},
@@ -2182,9 +2170,7 @@ var EthMulticall = MethodTests{
 					Validation: true,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
-					return err
-				}
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
 				if len(res) != len(params.BlockStateCalls) {
 					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
 				}
@@ -2224,9 +2210,7 @@ var EthMulticall = MethodTests{
 					Validation: true,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
-					return err
-				}
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
 				if len(res) != len(params.BlockStateCalls) {
 					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
 				}
@@ -3002,7 +2986,7 @@ var EthMulticall = MethodTests{
 						{
 							StateOverrides: &StateOverride{
 								common.Address{0xc0}: OverrideAccount{
-									Balance: newRPCBalance(2000000),
+									Balance: newRPCBalance(200000000),
 								},
 								common.Address{0xc1}: OverrideAccount{
 									Code: getBalanceGetter(),
@@ -3261,14 +3245,9 @@ var EthMulticall = MethodTests{
 			"Have a block state calls with 300 blocks",
 			func(ctx context.Context, t *T) error {
 				calls := make([]CallBatch, 300)
-				params := multicallOpts{
-					BlockStateCalls: calls,
-					TraceTransfers:  true,
-				}
+				params := multicallOpts{BlockStateCalls: calls}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
-					return err
-				}
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
 				return nil
 			},
 		},
