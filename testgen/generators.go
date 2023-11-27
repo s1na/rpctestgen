@@ -2798,8 +2798,8 @@ var EthMulticall = MethodTests{
 						{
 							BlockOverrides: &BlockOverrides{
 								Number:       (*hexutil.Big)(big.NewInt(20)),
-								Time:         getUint64Ptr(200),
-								GasLimit:     getUint64Ptr(190001),
+								Time:         getUint64Ptr(2000),
+								GasLimit:     getUint64Ptr(300000),
 								FeeRecipient: &common.Address{0xc1},
 								PrevRandao:   &prevRandDao2,
 								BaseFee:      (*hexutil.Big)(big.NewInt(20)),
@@ -2815,7 +2815,7 @@ var EthMulticall = MethodTests{
 						{
 							BlockOverrides: &BlockOverrides{
 								Number:       (*hexutil.Big)(big.NewInt(21)),
-								Time:         getUint64Ptr(300),
+								Time:         getUint64Ptr(30000),
 								GasLimit:     getUint64Ptr(190002),
 								FeeRecipient: &common.Address{0xc2},
 								PrevRandao:   &prevRandDao3,
@@ -3225,6 +3225,56 @@ var EthMulticall = MethodTests{
 				params := multicallOpts{BlockStateCalls: calls}
 				res := make([]blockResult, 0)
 				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				return nil
+			},
+		},
+		{
+			"multicall-move-ecrecover-and-call-old-and-new",
+			"move ecrecover and try calling the moved and non-moved version",
+			func(ctx context.Context, t *T) error {
+				ecRecoverAddress := common.BytesToAddress(*hex2Bytes("0000000000000000000000000000000000000001"))
+				ecRecoverMovedToAddress := common.BytesToAddress(*hex2Bytes("0000000000000000000000000000000000123456"))
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{{
+						StateOverrides: &StateOverride{ // move ecRecover and call it in new address
+							ecRecoverAddress: OverrideAccount{
+								MovePrecompileToAddress: &ecRecoverMovedToAddress,
+							},
+						},
+						Calls: []TransactionArgs{
+							{ // call new address with invalid params, should fail (resolve to 0x0)
+								From:  &common.Address{0xc1},
+								To:    &ecRecoverMovedToAddress,
+								Input: hex2Bytes("4554480000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007b45544800000000000000000000000000000000000000000000000000000000004554480000000000000000000000000000000000000000000000000000000000"),
+							},
+							{ // call new address with valid params, should resolve to 0xb11CaD98Ad3F8114E0b3A1F6E7228bc8424dF48a
+								From:  &common.Address{0xc1},
+								To:    &ecRecoverMovedToAddress,
+								Input: hex2Bytes("1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8000000000000000000000000000000000000000000000000000000000000001cb7cf302145348387b9e69fde82d8e634a0f8761e78da3bfa059efced97cbed0d2a66b69167cafe0ccfc726aec6ee393fea3cf0e4f3f9c394705e0f56d9bfe1c9"),
+							},
+							{ // call old address with invalid params, should fail (resolve to 0x0)
+								From:  &common.Address{0xc1},
+								To:    &ecRecoverAddress,
+								Input: hex2Bytes("4554480000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007b45544800000000000000000000000000000000000000000000000000000000004554480000000000000000000000000000000000000000000000000000000000"),
+							},
+							{ // call old address with valid params, should resolve to 0xb11CaD98Ad3F8114E0b3A1F6E7228bc8424dF48a
+								From:  &common.Address{0xc1},
+								To:    &ecRecoverAddress,
+								Input: hex2Bytes("1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8000000000000000000000000000000000000000000000000000000000000001cb7cf302145348387b9e69fde82d8e634a0f8761e78da3bfa059efced97cbed0d2a66b69167cafe0ccfc726aec6ee393fea3cf0e4f3f9c394705e0f56d9bfe1c9"),
+							},
+						},
+					}},
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if len(res) != len(params.BlockStateCalls) {
+					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
+				}
+				if len(res[0].Calls) != len(params.BlockStateCalls[0].Calls) {
+					return fmt.Errorf("unexpected number of call results (have: %d, want: %d)", len(res[0].Calls), len(params.BlockStateCalls[0].Calls))
+				}
 				return nil
 			},
 		},
