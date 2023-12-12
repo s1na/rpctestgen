@@ -3139,6 +3139,123 @@ var EthMulticall = MethodTests{
 			},
 		},
 		{
+			"multicall-send-eth-and-delegate-call",
+			"sending eth and delegate calling should only produce one log",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{{
+						StateOverrides: &StateOverride{
+							common.Address{0xc0}: OverrideAccount{
+								Balance: newRPCBalance(2000000),
+							},
+							common.Address{0xc1}: OverrideAccount{
+								Code: delegateCaller(),
+							},
+							common.Address{0xc2}: OverrideAccount{
+								Code: getBlockProperties(),
+							},
+						},
+						Calls: []TransactionArgs{{
+							From:  &common.Address{0xc0},
+							To:    &common.Address{0xc1},
+							Input: hex2Bytes("5c19a95c000000000000000000000000c200000000000000000000000000000000000000"),
+							Value: *newRPCBalance(1000),
+						}},
+					}},
+					TraceTransfers: true,
+					Validation:     false,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if res[0].Calls[0].Status != 1 {
+					return fmt.Errorf("unexpected call status (have: %d, want: %d)", res[0].Calls[0].Status, 1)
+				}
+				if len(res[0].Calls[0].Logs) != 1 {
+					return fmt.Errorf("unexpected number of logs (have: %d, want: %d)", len(res[0].Calls[0].Logs), 1)
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-send-eth-and-delegate-call-to-payble-contract",
+			"sending eth and delegate calling a payable contract should only produce one log",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{{
+						StateOverrides: &StateOverride{
+							common.Address{0xc0}: OverrideAccount{
+								Balance: newRPCBalance(2000000),
+							},
+							common.Address{0xc1}: OverrideAccount{
+								Code: delegateCaller2(),
+							},
+							common.Address{0xc2}: OverrideAccount{
+								Code: payableFallBack(),
+							},
+						},
+						Calls: []TransactionArgs{{
+							From:  &common.Address{0xc0},
+							To:    &common.Address{0xc1},
+							Input: hex2Bytes(""),
+							Value: *newRPCBalance(1000),
+						}},
+					}},
+					TraceTransfers: true,
+					Validation:     false,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if res[0].Calls[0].Status != 1 {
+					return fmt.Errorf("unexpected call status (have: %d, want: %d)", res[0].Calls[0].Status, 1)
+				}
+				if len(res[0].Calls[0].Logs) != 1 {
+					return fmt.Errorf("unexpected number of logs (have: %d, want: %d)", len(res[0].Calls[0].Logs), 1)
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-send-eth-and-delegate-call-to-eoa",
+			"sending eth and delegate calling a eoa should only produce one log",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{{
+						StateOverrides: &StateOverride{
+							common.Address{0xc0}: OverrideAccount{
+								Balance: newRPCBalance(2000000),
+							},
+							common.Address{0xc1}: OverrideAccount{
+								Code: delegateCaller2(),
+							},
+						},
+						Calls: []TransactionArgs{{
+							From:  &common.Address{0xc0},
+							To:    &common.Address{0xc1},
+							Input: hex2Bytes(""),
+							Value: *newRPCBalance(1000),
+						}},
+					}},
+					TraceTransfers: true,
+					Validation:     false,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if res[0].Calls[0].Status != 1 {
+					return fmt.Errorf("unexpected call status (have: %d, want: %d)", res[0].Calls[0].Status, 1)
+				}
+				if len(res[0].Calls[0].Logs) != 1 {
+					return fmt.Errorf("unexpected number of logs (have: %d, want: %d)", len(res[0].Calls[0].Logs), 1)
+				}
+				return nil
+			},
+		},
+		{
 			"multicall-self-destructive-contract-produces-logs",
 			"self destructive contract produces logs",
 			func(ctx context.Context, t *T) error {
