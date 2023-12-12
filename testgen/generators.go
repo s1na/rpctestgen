@@ -1571,6 +1571,9 @@ var EthMulticall = MethodTests{
 				if len(res[0].Calls[0].Logs) != 1 {
 					return fmt.Errorf("unexpected number of logs (have: %d, want: %d)", len(res[0].Calls[0].Logs), 1)
 				}
+				if res[0].Calls[0].Logs[0].Address.String() != "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" {
+					return fmt.Errorf("unexpected log address (have: %s, want: %s)", res[0].Calls[0].Logs[0].Address.String(), "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
+				}
 				return nil
 			},
 		},
