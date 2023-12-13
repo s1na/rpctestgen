@@ -1967,61 +1967,6 @@ var EthMulticall = MethodTests{
 			},
 		},
 		{
-			"multicall-move-account-twice",
-			"Move one account twice",
-			func(ctx context.Context, t *T) error {
-				params := multicallOpts{
-					BlockStateCalls: []CallBatch{{
-						StateOverrides: &StateOverride{
-							common.Address{0xc0}: OverrideAccount{
-								Balance: newRPCBalance(1000),
-							},
-							common.Address{0xc2}: OverrideAccount{
-								Balance: newRPCBalance(2000),
-							},
-							common.Address{0xc3}: OverrideAccount{
-								Balance: newRPCBalance(3000),
-							},
-							common.Address{0xc4}: OverrideAccount{
-								Code: getBalanceGetter(),
-							},
-						},
-					}, {
-						StateOverrides: &StateOverride{
-							common.Address{0xc0}: OverrideAccount{
-								Balance:                 newRPCBalance(3000),
-								MovePrecompileToAddress: &common.Address{0xc2},
-							},
-							common.Address{0xc2}: OverrideAccount{
-								Balance:                 newRPCBalance(4000),
-								MovePrecompileToAddress: &common.Address{0xc3},
-							},
-						},
-						Calls: []TransactionArgs{
-							{
-								From:  &common.Address{0xc0},
-								To:    &common.Address{0xc4},
-								Input: hex2Bytes("f8b2cb4f000000000000000000000000c000000000000000000000000000000000000000"), // gets balance of c0
-							},
-							{
-								From:  &common.Address{0xc0},
-								To:    &common.Address{0xc4},
-								Input: hex2Bytes("f8b2cb4f000000000000000000000000c200000000000000000000000000000000000000"), // gets balance of c2
-							},
-							{
-								From:  &common.Address{0xc0},
-								To:    &common.Address{0xc4},
-								Input: hex2Bytes("f8b2cb4f000000000000000000000000c300000000000000000000000000000000000000"), // gets balance of c3
-							},
-						},
-					}},
-				}
-				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
-				return nil
-			},
-		},
-		{
 			"multicall-move-two-non-precompiles-accounts-to-same",
 			"Move two non-precompiles to same adddress",
 			func(ctx context.Context, t *T) error {
@@ -2280,6 +2225,11 @@ var EthMulticall = MethodTests{
 								To:    &ecRecoverMovedToAddress,
 								Input: hex2Bytes("1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8000000000000000000000000000000000000000000000000000000000000001cb7cf302145348387b9e69fde82d8e634a0f8761e78da3bfa059efced97cbed0d2a66b69167cafe0ccfc726aec6ee393fea3cf0e4f3f9c394705e0f56d9bfe1c9"),
 							},
+							{ // call with valid params, the old address, should fail as it was moved
+								From:  &common.Address{0xc1},
+								To:    &ecRecoverAddress,
+								Input: hex2Bytes("1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8000000000000000000000000000000000000000000000000000000000000001cb7cf302145348387b9e69fde82d8e634a0f8761e78da3bfa059efced97cbed0d2a66b69167cafe0ccfc726aec6ee393fea3cf0e4f3f9c394705e0f56d9bfe1c9"),
+							},
 						},
 					}},
 				}
@@ -2293,6 +2243,85 @@ var EthMulticall = MethodTests{
 				if len(res[0].Calls) != len(params.BlockStateCalls[0].Calls) {
 					return fmt.Errorf("unexpected number of call results (have: %d, want: %d)", len(res[0].Calls), len(params.BlockStateCalls[0].Calls))
 				}
+				return nil
+			},
+		},
+		{
+			"multicall-move-ecrecover-twice-and-call",
+			"move ecrecover and try calling it, then move it again and call it",
+			func(ctx context.Context, t *T) error {
+				ecRecoverAddress := common.BytesToAddress(*hex2Bytes("0000000000000000000000000000000000000001"))
+				ecRecoverMovedToAddress := common.BytesToAddress(*hex2Bytes("0000000000000000000000000000000000123456"))
+				ecRecoverMovedToAddress2 := common.BytesToAddress(*hex2Bytes("0000000000000000000000000000000000123457"))
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{{
+						Calls: []TransactionArgs{ // just call ecrecover normally
+							{ // call with invalid params, should fail (resolve to 0x0)
+								From:  &common.Address{0xc1},
+								To:    &ecRecoverAddress,
+								Input: hex2Bytes("4554480000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007b45544800000000000000000000000000000000000000000000000000000000004554480000000000000000000000000000000000000000000000000000000000"),
+							},
+							{ // call with valid params, should resolve to 0xb11CaD98Ad3F8114E0b3A1F6E7228bc8424dF48a
+								From:  &common.Address{0xc1},
+								To:    &ecRecoverAddress,
+								Input: hex2Bytes("1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8000000000000000000000000000000000000000000000000000000000000001cb7cf302145348387b9e69fde82d8e634a0f8761e78da3bfa059efced97cbed0d2a66b69167cafe0ccfc726aec6ee393fea3cf0e4f3f9c394705e0f56d9bfe1c9"),
+							},
+						},
+					}, {
+						StateOverrides: &StateOverride{ // move ecRecover and call it in new address
+							ecRecoverAddress: OverrideAccount{
+								MovePrecompileToAddress: &ecRecoverMovedToAddress,
+							},
+						},
+						Calls: []TransactionArgs{
+							{ // call with invalid params, should fail (resolve to 0x0)
+								From:  &common.Address{0xc1},
+								To:    &ecRecoverMovedToAddress,
+								Input: hex2Bytes("4554480000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007b45544800000000000000000000000000000000000000000000000000000000004554480000000000000000000000000000000000000000000000000000000000"),
+							},
+							{ // call with valid params, should resolve to 0xb11CaD98Ad3F8114E0b3A1F6E7228bc8424dF48a
+								From:  &common.Address{0xc1},
+								To:    &ecRecoverMovedToAddress,
+								Input: hex2Bytes("1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8000000000000000000000000000000000000000000000000000000000000001cb7cf302145348387b9e69fde82d8e634a0f8761e78da3bfa059efced97cbed0d2a66b69167cafe0ccfc726aec6ee393fea3cf0e4f3f9c394705e0f56d9bfe1c9"),
+							},
+							{ // call with valid params, the old address, should fail as it was moved
+								From:  &common.Address{0xc1},
+								To:    &ecRecoverAddress,
+								Input: hex2Bytes("1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8000000000000000000000000000000000000000000000000000000000000001cb7cf302145348387b9e69fde82d8e634a0f8761e78da3bfa059efced97cbed0d2a66b69167cafe0ccfc726aec6ee393fea3cf0e4f3f9c394705e0f56d9bfe1c9"),
+							},
+						},
+					}, {
+						StateOverrides: &StateOverride{ // move ecRecover and call it in new address
+							ecRecoverAddress: OverrideAccount{
+								MovePrecompileToAddress: &ecRecoverMovedToAddress2,
+							},
+						},
+						Calls: []TransactionArgs{
+							{ // call with invalid params, should fail (resolve to 0x0)
+								From:  &common.Address{0xc1},
+								To:    &ecRecoverMovedToAddress,
+								Input: hex2Bytes("4554480000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000007b45544800000000000000000000000000000000000000000000000000000000004554480000000000000000000000000000000000000000000000000000000000"),
+							},
+							{ // call with valid params, should resolve to 0xb11CaD98Ad3F8114E0b3A1F6E7228bc8424dF48a
+								From:  &common.Address{0xc1},
+								To:    &ecRecoverMovedToAddress,
+								Input: hex2Bytes("1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8000000000000000000000000000000000000000000000000000000000000001cb7cf302145348387b9e69fde82d8e634a0f8761e78da3bfa059efced97cbed0d2a66b69167cafe0ccfc726aec6ee393fea3cf0e4f3f9c394705e0f56d9bfe1c9"),
+							},
+							{ // call with valid params, the old address, should fail as it was moved
+								From:  &common.Address{0xc1},
+								To:    &ecRecoverAddress,
+								Input: hex2Bytes("1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8000000000000000000000000000000000000000000000000000000000000001cb7cf302145348387b9e69fde82d8e634a0f8761e78da3bfa059efced97cbed0d2a66b69167cafe0ccfc726aec6ee393fea3cf0e4f3f9c394705e0f56d9bfe1c9"),
+							},
+							{ // call with valid params, should resolve to 0xb11CaD98Ad3F8114E0b3A1F6E7228bc8424dF48a
+								From:  &common.Address{0xc1},
+								To:    &ecRecoverMovedToAddress2,
+								Input: hex2Bytes("1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8000000000000000000000000000000000000000000000000000000000000001cb7cf302145348387b9e69fde82d8e634a0f8761e78da3bfa059efced97cbed0d2a66b69167cafe0ccfc726aec6ee393fea3cf0e4f3f9c394705e0f56d9bfe1c9"),
+							},
+						},
+					}},
+				}
+				res := make([]blockResult, 0)
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
 				return nil
 			},
 		},
@@ -3254,6 +3283,152 @@ var EthMulticall = MethodTests{
 				}
 				if len(res[0].Calls[0].Logs) != 1 {
 					return fmt.Errorf("unexpected number of logs (have: %d, want: %d)", len(res[0].Calls[0].Logs), 1)
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-extcodehash-override",
+			"test extcodehash getting of overriden contract",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{{
+						StateOverrides: &StateOverride{
+							common.Address{0xc0}: OverrideAccount{
+								Balance: newRPCBalance(2000000),
+							},
+							common.Address{0xc1}: OverrideAccount{
+								Code: extCodeHashContract(),
+							},
+						},
+						Calls: []TransactionArgs{{
+							From:  &common.Address{0xc0},
+							To:    &common.Address{0xc1},
+							Input: hex2Bytes("b9724d63000000000000000000000000c200000000000000000000000000000000000000"), // getExtCodeHash(0xc2)
+						}},
+					}, {
+						StateOverrides: &StateOverride{
+							common.Address{0xc2}: OverrideAccount{
+								Code: getBlockProperties(),
+							},
+						},
+						Calls: []TransactionArgs{{
+							From:  &common.Address{0xc0},
+							To:    &common.Address{0xc1},
+							Input: hex2Bytes("b9724d63000000000000000000000000c200000000000000000000000000000000000000"), // getExtCodeHash(0xc2)
+						}},
+					}},
+					TraceTransfers: true,
+					Validation:     false,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if res[0].Calls[0].Status != 1 {
+					return fmt.Errorf("unexpected call status (have: %d, want: %d)", res[0].Calls[0].Status, 1)
+				}
+				if res[1].Calls[0].Status != 1 {
+					return fmt.Errorf("unexpected call status (have: %d, want: %d)", res[0].Calls[0].Status, 1)
+				}
+				if res[0].Calls[0].ReturnData.String() == res[1].Calls[0].ReturnData.String() {
+					return fmt.Errorf("returndata did not change (have: %s, want: %s)", res[0].Calls[0].ReturnData.String(), res[1].Calls[0].ReturnData.String())
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-extcodehash-existing-contract",
+			"test extcodehash getting of existing contract and then overriding it",
+			func(ctx context.Context, t *T) error {
+				contractAddr := common.HexToAddress("0000000000000000000000000000000000031ec7")
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{{
+						StateOverrides: &StateOverride{
+							common.Address{0xc1}: OverrideAccount{
+								Code: extCodeHashContract(),
+							},
+						},
+						Calls: []TransactionArgs{{
+							From:  &common.Address{0xc0},
+							To:    &common.Address{0xc1},
+							Input: hex2Bytes("b9724d630000000000000000000000000000000000000000000000000000000000031ec7"), // getExtCodeHash(0000000000000000000000000000000000031ec7)
+						}},
+					}, {
+						StateOverrides: &StateOverride{
+							contractAddr: OverrideAccount{
+								Code: getBlockProperties(),
+							},
+						},
+						Calls: []TransactionArgs{{
+							From:  &common.Address{0xc0},
+							To:    &common.Address{0xc1},
+							Input: hex2Bytes("b9724d630000000000000000000000000000000000000000000000000000000000031ec7"), // getExtCodeHash(0000000000000000000000000000000000031ec7)
+						}},
+					}},
+					TraceTransfers: true,
+					Validation:     false,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if res[0].Calls[0].Status != 1 {
+					return fmt.Errorf("unexpected call status (have: %d, want: %d)", res[0].Calls[0].Status, 1)
+				}
+				if res[1].Calls[0].Status != 1 {
+					return fmt.Errorf("unexpected call status (have: %d, want: %d)", res[0].Calls[0].Status, 1)
+				}
+				if res[0].Calls[0].ReturnData.String() == res[1].Calls[0].ReturnData.String() {
+					return fmt.Errorf("returndata did not change (have: %s, want: %s)", res[0].Calls[0].ReturnData.String(), res[1].Calls[0].ReturnData.String())
+				}
+				return nil
+			},
+		},
+		{
+			"multicall-extcodehash-precompile",
+			"test extcodehash getting of precompile and then again after override",
+			func(ctx context.Context, t *T) error {
+				ecRecoverAddress := common.BytesToAddress(*hex2Bytes("0000000000000000000000000000000000000001"))
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{{
+						StateOverrides: &StateOverride{
+							common.Address{0xc1}: OverrideAccount{
+								Code: extCodeHashContract(),
+							},
+						},
+						Calls: []TransactionArgs{{
+							From:  &common.Address{0xc0},
+							To:    &common.Address{0xc1},
+							Input: hex2Bytes("b9724d630000000000000000000000000000000000000000000000000000000000000001"), // getExtCodeHash(0x1)
+						}},
+					}, {
+						StateOverrides: &StateOverride{
+							ecRecoverAddress: OverrideAccount{
+								Code: getBlockProperties(),
+							},
+						},
+						Calls: []TransactionArgs{{
+							From:  &common.Address{0xc0},
+							To:    &common.Address{0xc1},
+							Input: hex2Bytes("b9724d630000000000000000000000000000000000000000000000000000000000000001"), // getExtCodeHash(0x1)
+						}},
+					}},
+					TraceTransfers: true,
+					Validation:     false,
+				}
+				res := make([]blockResult, 0)
+				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+					return err
+				}
+				if res[0].Calls[0].Status != 1 {
+					return fmt.Errorf("unexpected call status (have: %d, want: %d)", res[0].Calls[0].Status, 1)
+				}
+				if res[1].Calls[0].Status != 1 {
+					return fmt.Errorf("unexpected call status (have: %d, want: %d)", res[0].Calls[0].Status, 1)
+				}
+				if res[0].Calls[0].ReturnData.String() == res[1].Calls[0].ReturnData.String() {
+					return fmt.Errorf("returndata did not change (have: %s, want: %s)", res[0].Calls[0].ReturnData.String(), res[1].Calls[0].ReturnData.String())
 				}
 				return nil
 			},
