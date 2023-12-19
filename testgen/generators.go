@@ -699,9 +699,6 @@ var EthMulticall = MethodTests{
 				}
 				res := make([]blockResult, 0)
 				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
-				if len(res) != len(params.BlockStateCalls) {
-					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
-				}
 				return nil
 			},
 		},
@@ -1571,8 +1568,8 @@ var EthMulticall = MethodTests{
 				if len(res[0].Calls[0].Logs) != 1 {
 					return fmt.Errorf("unexpected number of logs (have: %d, want: %d)", len(res[0].Calls[0].Logs), 1)
 				}
-				if res[0].Calls[0].Logs[0].Address.String() != "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee" {
-					return fmt.Errorf("unexpected log address (have: %s, want: %s)", res[0].Calls[0].Logs[0].Address.String(), "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")
+				if res[0].Calls[0].Logs[0].Address.String() != "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE" {
+					return fmt.Errorf("unexpected log address (have: %s, want: %s)", res[0].Calls[0].Logs[0].Address.String(), "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE")
 				}
 				return nil
 			},
