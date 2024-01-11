@@ -448,7 +448,7 @@ var EthCall = MethodTests{
 
 // EthMulticall stores a list of all tests against the method.
 var EthMulticall = MethodTests{
-	"eth_multicallV1",
+	"eth_simulateV1",
 	[]Test{
 		{
 			"multicall-simple",
@@ -473,7 +473,7 @@ var EthMulticall = MethodTests{
 					},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params.BlockStateCalls) {
@@ -506,7 +506,7 @@ var EthMulticall = MethodTests{
 					Validation: false,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params.BlockStateCalls) {
@@ -536,7 +536,7 @@ var EthMulticall = MethodTests{
 					Validation: false,
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -568,7 +568,7 @@ var EthMulticall = MethodTests{
 					Validation: false,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params.BlockStateCalls) {
@@ -603,7 +603,7 @@ var EthMulticall = MethodTests{
 					Validation: false,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params.BlockStateCalls) {
@@ -637,7 +637,7 @@ var EthMulticall = MethodTests{
 					Validation: true,
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -698,7 +698,7 @@ var EthMulticall = MethodTests{
 					Validation: false,
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -754,7 +754,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params.BlockStateCalls) {
@@ -786,7 +786,7 @@ var EthMulticall = MethodTests{
 					Validation: true,
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -812,7 +812,7 @@ var EthMulticall = MethodTests{
 					Validation: true,
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -835,7 +835,7 @@ var EthMulticall = MethodTests{
 					Validation:     false,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params.BlockStateCalls) {
@@ -863,7 +863,7 @@ var EthMulticall = MethodTests{
 					Validation:     false,
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -886,7 +886,7 @@ var EthMulticall = MethodTests{
 					Validation:     true,
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -928,7 +928,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -966,7 +966,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params.BlockStateCalls) {
@@ -1007,7 +1007,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -1029,7 +1029,7 @@ var EthMulticall = MethodTests{
 					},
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -1051,7 +1051,7 @@ var EthMulticall = MethodTests{
 					},
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -1073,7 +1073,7 @@ var EthMulticall = MethodTests{
 					},
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -1102,7 +1102,7 @@ var EthMulticall = MethodTests{
 					},
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -1132,7 +1132,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]interface{}, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params.BlockStateCalls) {
@@ -1168,7 +1168,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params.BlockStateCalls) {
@@ -1196,7 +1196,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params.BlockStateCalls) {
@@ -1257,7 +1257,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params.BlockStateCalls) {
@@ -1342,7 +1342,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, (*hexutil.Big)(big.NewInt(1))); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, (*hexutil.Big)(big.NewInt(1))); err != nil {
 					return err
 				}
 				if len(res) != len(params.BlockStateCalls) {
@@ -1424,7 +1424,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, (*hexutil.Big)(big.NewInt(1))); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, (*hexutil.Big)(big.NewInt(1))); err != nil {
 					return err
 				}
 				if len(res) != len(params.BlockStateCalls) {
@@ -1476,7 +1476,7 @@ var EthMulticall = MethodTests{
 					},
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -1537,7 +1537,7 @@ var EthMulticall = MethodTests{
 					},
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -1559,7 +1559,7 @@ var EthMulticall = MethodTests{
 					TraceTransfers: true,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params.BlockStateCalls) {
@@ -1593,7 +1593,7 @@ var EthMulticall = MethodTests{
 					TraceTransfers: true,
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -1603,7 +1603,7 @@ var EthMulticall = MethodTests{
 			func(ctx context.Context, t *T) error {
 				params := multicallOpts{}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -1625,7 +1625,7 @@ var EthMulticall = MethodTests{
 					TraceTransfers: true,
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -1659,7 +1659,7 @@ var EthMulticall = MethodTests{
 					TraceTransfers: true,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				return nil
@@ -1684,7 +1684,7 @@ var EthMulticall = MethodTests{
 					TraceTransfers: true,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params.BlockStateCalls) {
@@ -1716,7 +1716,7 @@ var EthMulticall = MethodTests{
 					TraceTransfers: true,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params.BlockStateCalls) {
@@ -1749,7 +1749,7 @@ var EthMulticall = MethodTests{
 					TraceTransfers: true,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params.BlockStateCalls) {
@@ -1778,7 +1778,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params.BlockStateCalls) {
@@ -1807,7 +1807,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -1825,7 +1825,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params.BlockStateCalls) {
@@ -1856,7 +1856,7 @@ var EthMulticall = MethodTests{
 					Validation: true,
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -1882,7 +1882,7 @@ var EthMulticall = MethodTests{
 					Validation: false,
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -1902,7 +1902,7 @@ var EthMulticall = MethodTests{
 					Validation: false,
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -1920,7 +1920,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -1938,7 +1938,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -1957,7 +1957,7 @@ var EthMulticall = MethodTests{
 					Validation: true,
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -1979,7 +1979,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -2000,7 +2000,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -2023,7 +2023,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -2058,7 +2058,7 @@ var EthMulticall = MethodTests{
 					Validation: true,
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -2078,7 +2078,7 @@ var EthMulticall = MethodTests{
 					Validation: true,
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "0x111")
+				t.rpc.Call(&res, "eth_simulateV1", params, "0x111")
 				return nil
 			},
 		},
@@ -2115,7 +2115,7 @@ var EthMulticall = MethodTests{
 					Validation: true,
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				if len(res) != len(params.BlockStateCalls) {
 					return fmt.Errorf("unexpected number of results (have: %d, want: %d)", len(res), len(params.BlockStateCalls))
 				}
@@ -2155,7 +2155,7 @@ var EthMulticall = MethodTests{
 					Validation: true,
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -2178,7 +2178,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params.BlockStateCalls) {
@@ -2251,7 +2251,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params.BlockStateCalls) {
@@ -2338,7 +2338,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -2392,7 +2392,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params.BlockStateCalls) {
@@ -2451,7 +2451,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				return nil
@@ -2486,7 +2486,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				return nil
@@ -2510,7 +2510,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				return nil
@@ -2569,7 +2569,7 @@ var EthMulticall = MethodTests{
 					TraceTransfers: true,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				return nil
@@ -2628,7 +2628,7 @@ var EthMulticall = MethodTests{
 					TraceTransfers: true,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				return nil
@@ -2716,7 +2716,7 @@ var EthMulticall = MethodTests{
 					TraceTransfers: true,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params.BlockStateCalls) {
@@ -2772,7 +2772,7 @@ var EthMulticall = MethodTests{
 					},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params.BlockStateCalls) {
@@ -2804,7 +2804,7 @@ var EthMulticall = MethodTests{
 					},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params.BlockStateCalls) {
@@ -2881,7 +2881,7 @@ var EthMulticall = MethodTests{
 					},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params.BlockStateCalls) {
@@ -2937,7 +2937,7 @@ var EthMulticall = MethodTests{
 					},
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -2997,7 +2997,7 @@ var EthMulticall = MethodTests{
 					},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				return nil
@@ -3051,7 +3051,7 @@ var EthMulticall = MethodTests{
 					TraceTransfers: true,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params.BlockStateCalls) {
@@ -3083,7 +3083,7 @@ var EthMulticall = MethodTests{
 					TraceTransfers: true,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				return nil
@@ -3181,7 +3181,7 @@ var EthMulticall = MethodTests{
 					TraceTransfers: true,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				return nil
@@ -3215,7 +3215,7 @@ var EthMulticall = MethodTests{
 					Validation:     false,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if res[0].Calls[0].Status != 1 {
@@ -3255,7 +3255,7 @@ var EthMulticall = MethodTests{
 					Validation:     false,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if res[0].Calls[0].Status != 1 {
@@ -3292,7 +3292,7 @@ var EthMulticall = MethodTests{
 					Validation:     false,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if res[0].Calls[0].Status != 1 {
@@ -3339,7 +3339,7 @@ var EthMulticall = MethodTests{
 					Validation:     false,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if res[0].Calls[0].Status != 1 {
@@ -3387,7 +3387,7 @@ var EthMulticall = MethodTests{
 					Validation:     false,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if res[0].Calls[0].Status != 1 {
@@ -3435,7 +3435,7 @@ var EthMulticall = MethodTests{
 					Validation:     false,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if res[0].Calls[0].Status != 1 {
@@ -3471,7 +3471,7 @@ var EthMulticall = MethodTests{
 					TraceTransfers: true,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				return nil
@@ -3488,7 +3488,7 @@ var EthMulticall = MethodTests{
 					TraceTransfers: true,
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -3505,7 +3505,7 @@ var EthMulticall = MethodTests{
 					TraceTransfers: true,
 				}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -3523,7 +3523,7 @@ var EthMulticall = MethodTests{
 					TraceTransfers: true,
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				return nil
@@ -3536,7 +3536,7 @@ var EthMulticall = MethodTests{
 				calls := make([]CallBatch, 300)
 				params := multicallOpts{BlockStateCalls: calls}
 				res := make([]blockResult, 0)
-				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				t.rpc.Call(&res, "eth_simulateV1", params, "latest")
 				return nil
 			},
 		},
@@ -3578,7 +3578,7 @@ var EthMulticall = MethodTests{
 					}},
 				}
 				res := make([]blockResult, 0)
-				if err := t.rpc.Call(&res, "eth_multicallV1", params, "latest"); err != nil {
+				if err := t.rpc.Call(&res, "eth_simulateV1", params, "latest"); err != nil {
 					return err
 				}
 				if len(res) != len(params.BlockStateCalls) {
