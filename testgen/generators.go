@@ -1887,6 +1887,26 @@ var EthMulticall = MethodTests{
 			},
 		},
 		{
+			"multicall-basefee-too-low-without-validation-38012-without-basefee-override",
+			"tries to send transaction with zero basefee",
+			func(ctx context.Context, t *T) error {
+				params := multicallOpts{
+					BlockStateCalls: []CallBatch{{
+						Calls: []TransactionArgs{{
+							From:                 &common.Address{0xc1},
+							To:                   &common.Address{0xc1},
+							MaxFeePerGas:         (*hexutil.Big)(big.NewInt(0)),
+							MaxPriorityFeePerGas: (*hexutil.Big)(big.NewInt(0)),
+						}},
+					}},
+					Validation: false,
+				}
+				res := make([]blockResult, 0)
+				t.rpc.Call(&res, "eth_multicallV1", params, "latest")
+				return nil
+			},
+		},
+		{
 			"multicall-instrict-gas-38013",
 			"Error: Not enough gas provided to pay for intrinsic gas (-38013)",
 			func(ctx context.Context, t *T) error {
