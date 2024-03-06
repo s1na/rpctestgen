@@ -8,7 +8,7 @@ import (
 )
 
 func checkHeaderRLP(t *T, n uint64, got []byte) error {
-	head := t.chain.GetHeaderByNumber(n)
+	head := t.chain.GetBlock(int(n)).Header()
 	if head == nil {
 		return fmt.Errorf("unable to load block %d from test chain", n)
 	}
@@ -23,7 +23,7 @@ func checkHeaderRLP(t *T, n uint64, got []byte) error {
 }
 
 func checkBlockRLP(t *T, n uint64, got []byte) error {
-	head := t.chain.GetBlockByNumber(n)
+	head := t.chain.GetBlock(int(n))
 	if head == nil {
 		return fmt.Errorf("unable to load block %d from test chain", n)
 	}

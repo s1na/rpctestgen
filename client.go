@@ -2,15 +2,16 @@ package main
 
 import (
 	"context"
-	"encoding/json"
+	"crypto/rand"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 
-	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/rlp"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/node"
+	"github.com/ethereum/go-ethereum/rpc"
 )
 
 // Client is an interface for generically interacting with Ethereum clients.
@@ -18,8 +19,10 @@ type Client interface {
 	// Start starts client, but does not wait for the command to exit.
 	Start(ctx context.Context, verbose bool) error
 
-	// HttpAddr returns the address where the client is servering its
-	// JSON-RPC.
+	// AfterStart is called after the client has been fully started.
+	AfterStart(ctx context.Context) error
+
+	// HttpAddr returns the address where the client is serving JSON-RPC.
 	HttpAddr() string
 
 	// Close closes the client.
@@ -31,23 +34,30 @@ type gethClient struct {
 	cmd     *exec.Cmd
 	path    string
 	workdir string
-	blocks  []*types.Block
-	genesis *core.Genesis
+	jwt     []byte
+	fcu     rpcRequest
+}
+
+type rpcRequest struct {
+	Method string
+	Params []any
 }
 
 // newGethClient instantiates a new GethClient.
 //
 // The client's data directory is set to a temporary location and it
 // initializes with the genesis and the provided blocks.
-func newGethClient(ctx context.Context, path string, genesis *core.Genesis, blocks []*types.Block, verbose bool) (*gethClient, error) {
+func newGethClient(ctx context.Context, geth string, chaindir string, verbose bool) (*gethClient, error) {
+	// Load ForkchoiceUpdated from test chain.
+	var fcuRequest rpcRequest
+	fcuFile := filepath.Join(chaindir, "headfcu.json")
+	if err := common.LoadJSON(fcuFile, &fcuRequest); err != nil {
+		return nil, err
+	}
+
+	// Initialize the data directory.
 	tmp, err := os.MkdirTemp("", "rpctestgen-*")
 	if err != nil {
-		return nil, err
-	}
-	if err := writeGenesis(fmt.Sprintf("%s/genesis.json", tmp), genesis); err != nil {
-		return nil, err
-	}
-	if err := writeChain(fmt.Sprintf("%s/chain.rlp", tmp), blocks); err != nil {
 		return nil, err
 	}
 
@@ -59,25 +69,33 @@ func newGethClient(ctx context.Context, path string, genesis *core.Genesis, bloc
 	)
 
 	// Run geth init.
-	options := []string{datadir, gcmode, loglevel, "init", fmt.Sprintf("%s/genesis.json", tmp)}
-	err = runCmd(ctx, path, verbose, options...)
+	options := []string{datadir, gcmode, loglevel, "init", filepath.Join(chaindir, "genesis.json")}
+	err = runCmd(ctx, geth, verbose, options...)
 	if err != nil {
 		return nil, err
 	}
 
 	// Run geth import.
-	options = []string{datadir, gcmode, loglevel, "import", fmt.Sprintf("%s/chain.rlp", tmp)}
-	err = runCmd(ctx, path, verbose, options...)
+	options = []string{datadir, gcmode, loglevel, "import", filepath.Join(chaindir, "chain.rlp")}
+	err = runCmd(ctx, geth, verbose, options...)
 	if err != nil {
 		return nil, err
 	}
 
-	return &gethClient{path: path, genesis: genesis, blocks: blocks, workdir: tmp}, nil
+	jwt := make([]byte, 32)
+	rand.Read(jwt)
+	if err := os.WriteFile(fmt.Sprintf("%s/jwt.hex", tmp), []byte(hexutil.Encode(jwt)), 0600); err != nil {
+		return nil, err
+	}
+
+	g := &gethClient{path: geth, workdir: tmp, jwt: jwt, fcu: fcuRequest}
+	return g, nil
 }
 
 // Start starts geth, but does not wait for the command to exit.
 func (g *gethClient) Start(ctx context.Context, verbose bool) error {
 	fmt.Println("starting client")
+
 	var (
 		args    = ctx.Value(ARGS).(*Args)
 		options = []string{
@@ -90,19 +108,34 @@ func (g *gethClient) Start(ctx context.Context, verbose bool) error {
 			"--http.api=admin,eth,debug",
 			fmt.Sprintf("--http.addr=%s", HOST),
 			fmt.Sprintf("--http.port=%s", PORT),
+			fmt.Sprintf("--authrpc.port=%s", AUTHPORT),
+			fmt.Sprintf("--authrpc.jwtsecret=%s", fmt.Sprintf("%s/jwt.hex", g.workdir)),
 		}
 	)
-	g.cmd = exec.CommandContext(
-		ctx,
-		g.path,
-		options...,
-	)
+	g.cmd = exec.CommandContext(ctx, g.path, options...)
 	if verbose {
 		g.cmd.Stdout = os.Stdout
 		g.cmd.Stderr = os.Stderr
 	}
 	if err := g.cmd.Start(); err != nil {
 		return err
+	}
+	return nil
+}
+
+// AfterStart is called after the client has been fully started.
+// We send a forkchoiceUpdatedV2 request to the engine to trigger a post-merge forkchoice.
+func (g *gethClient) AfterStart(ctx context.Context) error {
+	auth := node.NewJWTAuth(common.BytesToHash(g.jwt))
+	endpoint := fmt.Sprintf("http://%s:%s", HOST, AUTHPORT)
+	cl, err := rpc.DialOptions(ctx, endpoint, rpc.WithHTTPAuth(auth))
+	if err != nil {
+		return err
+	}
+	defer cl.Close()
+	err = cl.CallContext(ctx, nil, g.fcu.Method, g.fcu.Params...)
+	if err != nil {
+		return fmt.Errorf("geth rejected forkchoiceUpdated: %v", err)
 	}
 	return nil
 }
@@ -131,56 +164,4 @@ func runCmd(ctx context.Context, path string, verbose bool, args ...string) erro
 		return err
 	}
 	return nil
-}
-
-// writeGenesis writes the genesis to disk.
-func writeGenesis(filename string, genesis *core.Genesis) error {
-	out, err := json.MarshalIndent(genesis, "", "  ")
-	if err != nil {
-		return err
-	}
-	if err := os.WriteFile(filename, out, 0644); err != nil {
-		return err
-	}
-	return nil
-}
-
-// writeChain writes a chain to disk.
-func writeChain(filename string, blocks []*types.Block) error {
-	w, err := os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
-	if err != nil {
-		return err
-	}
-	defer w.Close()
-	for _, block := range blocks {
-		if err := rlp.Encode(w, block); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// readChain reads a chain.rlp file to a slice of Block.
-func readChain(filename string) ([]*types.Block, error) {
-	f, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-	var (
-		stream = rlp.NewStream(f, 0)
-		blocks = make([]*types.Block, 0)
-		i      = 0
-	)
-	for {
-		var b types.Block
-		if err := stream.Decode(&b); err == io.EOF {
-			break
-		} else if err != nil {
-			return nil, fmt.Errorf("at block %d: %v", i, err)
-		}
-		blocks = append(blocks, &b)
-		i++
-	}
-	return blocks, nil
 }
